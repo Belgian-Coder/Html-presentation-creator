@@ -1,6 +1,6 @@
 # Working in the source project (animated-presentation/)
 
-Read this only when the task is in the **source project** (a folder with `build.py`, `src/`, `tools/`), for example
+Read this only when the task is in the **source project** (a repository with `Presentation.html`, and `source/` holding `build.py`, `src/`, `tools/`), for example
 "change the editor", "fix a bug in the presenter view", "add a feature". To change one presentation's slides, edit the
 single HTML file instead (SKILL.md): the source project is not needed for that, and an edited file is its own master copy
 (`src/` does not see edits made in the file, and a rebuild from `src/` does not see edits made in the file).
@@ -18,6 +18,10 @@ single HTML file instead (SKILL.md): the source project is not needed for that, 
 
 ```
 animated-presentation/
+├── Presentation.html        the built presentation (committed; rebuild it after every source change)
+├── README.md                short introduction; docs/MANUAL.md has every feature, docs/CHANGELOG.md the versions
+├── AGENTS.md                rules for coding agents
+└── source/                  (the paths below are inside source/)
 ├── src/deck.html            outline: READ ME FIRST + one `<!-- include: … -->` line per part, in order
 ├── src/slides/NN-name.html  one <section class="scene"> per slide (the 38 template slides, which are the presentation)
 ├── src/parts/               slide-templates.html (the <template id="slideTemplates">), controls-bar.html, settings-panel.html
@@ -32,11 +36,10 @@ animated-presentation/
 ├── build.py                 joins src/ into one file and embeds fonts and images (img/, fonts/)
 ├── tools/test.mjs           test runner (headless Chrome/Edge, Node 22+, no npm)
 ├── tools/test/harness.mjs   the browser + page API the suites use (t.open, t.click, t.key, t.editor.* …)
-├── tools/test/suites/*.mjs  14 suites, ~1390 checks
+├── tools/test/suites/*.mjs  13 suites, ~1380 checks (editor and presenter view only)
 ├── tools/ui-audit.mjs       screenshots of every screen at 1920×1080 and 960×1080 + layout checks
 ├── tools/ui-audit-actions.mjs  runs every menu / right-click / selection-bar action and records what it did
-├── tools/deliver.py         build + backups + copy + source zip to the delivery folder
-└── README.md                the user guide (Part 1) and the developer guide (Part 2) — keep it up to date
+└── tools/deliver.py         build + backups + copy + source zip to the delivery folder
 ```
 
 New interface texts go in `src/interface-texts.json` (never hard-code an English sentence in JS). New files in
@@ -45,22 +48,22 @@ New interface texts go in `src/interface-texts.json` (never hard-code an English
 ## 2. Build
 
 ```
-python <project>/build.py --preview      # Presentation.html, index.html and _preview.html (tests use _preview.html)
-python <project>/build.py --joined       # also _joined.html: the joined source without the embedded binaries (to read)
-python <project>/build.py --without editor,presenter   # the variants (see file-format.md "variants")
-python <project>/tools/get-fonts.py      # after adding a Google Fonts family to FAMILIES: downloads it, rewrites css/01-fonts.css
-node <project>/tools/theme-shots.mjs [outDir] [--themes Swiss] [--slides title,numbers] [--page file.html]   # slides per theme
-node <project>/tools/panel-shots.mjs [outDir] [--tips]   # the editor's Properties panel, every tab
+python <project>/source/build.py --preview      # Presentation.html, index.html and _preview.html (tests use _preview.html)
+python <project>/source/build.py --joined       # also _joined.html: the joined source without the embedded binaries (to read)
+python <project>/source/build.py --without editor,presenter   # the variants (see file-format.md "variants")
+python <project>/source/tools/get-fonts.py      # after adding a Google Fonts family to FAMILIES: downloads it, rewrites css/01-fonts.css
+node <project>/source/tools/theme-shots.mjs [outDir] [--themes Swiss] [--slides title,numbers] [--page file.html]   # slides per theme
+node <project>/source/tools/panel-shots.mjs [outDir] [--tips]   # the editor's Properties panel, every tab
 ```
 On macOS/Linux use `python3`. The build stops with a clear message when an include is wrong or an image is missing.
 
 ## 3. Tests
 
 ```
-node <project>/tools/test.mjs                 # only the suites whose files changed since the last passing run
-node <project>/tools/test.mjs --all           # all 14 suites (~4 min, 4 at a time)
-node <project>/tools/test.mjs editor-canvas smoke   # named suites
-node <project>/tools/test.mjs --list          # which suite covers which files
+node <project>/source/tools/test.mjs                 # only the suites whose files changed since the last passing run
+node <project>/source/tools/test.mjs --all           # all 13 suites (~4 min, 4 at a time)
+node <project>/source/tools/test.mjs editor-canvas smoke   # named suites
+node <project>/source/tools/test.mjs --list          # which suite covers which files
 ```
 Suites: smoke, snapshot (every slide and click vs a baseline; `--update-baseline` after an intended visual change),
 presenting, presenter-extras, variants, editor-core, editor-canvas, editor-app, editor-commands, editor-tools,
@@ -78,8 +81,8 @@ A failure that repeats when its suite runs alone is real.
 ## 4. UI audits (not tests: they produce pictures and findings to review)
 
 ```
-node <project>/tools/ui-audit.mjs [outDir]            # ~5 min: 71 screens × 2 sizes, report.json
-node <project>/tools/ui-audit-actions.mjs [outDir] [filter]   # ~30 min: ~273 actions × 2 sizes, results.json + summary.md
+node <project>/source/tools/ui-audit.mjs [outDir]            # ~5 min: 71 screens × 2 sizes, report.json
+node <project>/source/tools/ui-audit-actions.mjs [outDir] [filter]   # ~30 min: ~273 actions × 2 sizes, results.json + summary.md
 ```
 Build with `--preview` first: both use `_preview.html`. Look at `summary.md` (actions flagged "no visible result", script
 errors, new layout findings) and at the screenshots; the automatic layout findings are noisy, the pictures decide.
@@ -88,11 +91,11 @@ After a change to one action, run the action audit with a filter (e.g. `paste`, 
 ## 5. Delivery
 
 ```
-python <project>/tools/deliver.py --version NN [--skip-tests] [--to <folder>]
+python <project>/source/tools/deliver.py --version NN [--skip-tests] [--to <folder>]
 ```
 Runs the tests of what changed (unless --skip-tests), builds once, backs up, copies Presentation.html and Presentation-source.zip
 to the delivery folder (`--to`, or PRESENTATION_DELIVER_DIR, or ~/Downloads/animated-presentation). Add a README line per version
-(README "Part 1 › The editor" has the version notes).
+(docs/CHANGELOG.md has the version notes).
 
 ## 6. Conventions
 
@@ -102,7 +105,7 @@ to the delivery folder (`--to`, or PRESENTATION_DELIVER_DIR, or ~/Downloads/anim
 - The model (`editor.model`, a parsed copy of the file) is what is saved; the canvas shows a still copy of a slide.
 - New editor commands: add to COMMANDS in `js/20-editor-commands.js` ([id, label key, keys, action, needs]), to a MENUS
   entry, and words to COMMAND_WORDS so Ctrl+K finds it; then a test in a suite and a line in the README.
-- Comments in the code explain why; README Part 2 explains the structure. Keep both current.
+- Comments in the code explain why; docs/MANUAL.md Part 2 explains the structure. Keep both current.
 
 ## 7. Browsers on Windows (important)
 

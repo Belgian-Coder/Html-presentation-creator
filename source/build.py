@@ -4,7 +4,7 @@ Optional: the presentation can also be changed in the HTML file itself, with its
 This script is for developers who keep the source as small files in src/.
 
 Usage (works from any folder):
-    python <folder>/build.py                  -> index.html (published artifact) + Presentation.html (standalone)
+    python <folder>/build.py                  -> ../Presentation.html (the presentation, next to README.md) + index.html (for web publishing)
     python <folder>/build.py --preview        -> also _preview.html for local checks
     python <folder>/build.py --out <folder>   -> also copy Presentation.html into <folder>
     python <folder>/build.py --joined         -> also _joined.html: the parts joined, images not embedded (to read or diff)
@@ -37,6 +37,7 @@ import sys
 from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
+REPOSITORY = HERE.parent   # Presentation.html is written here, next to README.md
 SOURCE_FOLDER = HERE / "src"
 OUTLINE_FILE = SOURCE_FOLDER / "deck.html"
 PART_FOLDERS = ["css", "js", "slides", "parts"]   # every file in these must be included exactly once
@@ -229,7 +230,7 @@ def main() -> None:
     print(f"index.html: {len(deck) // 1024} KB")
 
     standalone = wrap_as_document(deck)
-    (HERE / STANDALONE_NAME).write_text(standalone, encoding="utf-8")
+    (REPOSITORY / STANDALONE_NAME).write_text(standalone, encoding="utf-8")
     if "--preview" in sys.argv:
         (HERE / "_preview.html").write_text(standalone, encoding="utf-8")
     if "--out" in sys.argv:

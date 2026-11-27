@@ -25,11 +25,12 @@ import sys
 import zipfile
 from pathlib import Path
 
-PROJECT = Path(__file__).resolve().parent.parent
+PROJECT = Path(__file__).resolve().parent.parent   # source/
+REPOSITORY = PROJECT.parent                         # Presentation.html, README.md, docs/ ...
 NAME = "Presentation"
-ZIP_PARTS = ["src", "docs", "img", "fonts", "tools", ".claude", ".github", "AGENTS.md", ".gitignore", ".gitattributes", "build.py", "README.md", f"{NAME}.html"]
-BACKUP_PARTS = ["src", "docs", "tools", ".claude", ".github", "AGENTS.md", ".gitignore", ".gitattributes", "build.py", "README.md", f"{NAME}.html"]
-NOT_SHIPPED = {"last-pass.json", "built-from.txt"}   # this machine's test memory
+ZIP_PARTS = ["source", "docs", ".claude", ".github", "AGENTS.md", ".gitignore", ".gitattributes", "README.md", f"{NAME}.html"]   # (in the repository)
+BACKUP_PARTS = ZIP_PARTS
+NOT_SHIPPED = {"last-pass.json", "built-from.txt", "_preview.html", "_joined.html", "index.html", "__pycache__"}   # this machine's test memory and build leftovers
 
 
 def option(name, default=None):
@@ -66,26 +67,26 @@ def main() -> None:
     for name in [f"{NAME}.html", f"{NAME}-source.zip"]:
         if (out / name).exists():
             shutil.copy2(out / name, before / name)
-    shutil.copy2(PROJECT / f"{NAME}.html", out / f"{NAME}.html")
+    shutil.copy2(REPOSITORY / f"{NAME}.html", out / f"{NAME}.html")
     # the copies without the editor and/or the presenter view (build.py --without; README "Leaving parts out")
     sys.path.insert(0, str(PROJECT))
     import build
-    full = (PROJECT / f"{NAME}.html").read_text(encoding="utf-8")
+    full = (REPOSITORY / f"{NAME}.html").read_text(encoding="utf-8")
     for parts, suffix in build.VARIANT_NAMES.items():
         (out / f"{NAME}-{suffix}.html").write_text(build.without_parts(full, parts), encoding="utf-8")
 
     zip_path = out / f"{NAME}-source.zip"
     with zipfile.ZipFile(zip_path, "w", zipfile.ZIP_DEFLATED) as archive:
         for part in ZIP_PARTS:
-            path = PROJECT / part
+            path = REPOSITORY / part
             for file in [path] if path.is_file() else sorted(p for p in path.rglob("*") if p.is_file()):
-                if file.name not in NOT_SHIPPED:
-                    archive.write(file, "animated-presentation/" + file.relative_to(PROJECT).as_posix())
+                if file.name not in NOT_SHIPPED and "__pycache__" not in file.parts:
+                    archive.write(file, "animated-presentation/" + file.relative_to(REPOSITORY).as_posix())
 
     after = backups / f"v{version}-{date}"
     after.mkdir(exist_ok=False)
     for part in BACKUP_PARTS:
-        source = PROJECT / part
+        source = REPOSITORY / part
         if source.is_dir():
             shutil.copytree(source, after / part, ignore=shutil.ignore_patterns(*NOT_SHIPPED))
         else:

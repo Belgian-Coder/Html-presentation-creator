@@ -1,14 +1,13 @@
-# built by build.py (python build.py rebuilds them)
-/index.html
-/Presentation.html
+# built by source/build.py (Presentation.html itself IS kept: it is the product)
 /Presentation-*.html
-/_preview.html
-/_joined.html
-/_copy.html
+/source/Presentation-*.html
+/source/index.html
+/source/_preview.html
+/source/_joined.html
 
 # test state of this machine
-/tools/test/last-pass.json
-/tools/test/built-from.txt
+/source/tools/test/last-pass.json
+/source/tools/test/built-from.txt
 
 # Python and Node leftovers
 __pycache__/

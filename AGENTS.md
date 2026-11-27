@@ -1,13 +1,15 @@
 # AGENTS.md
 
 Instructions for AI coding agents (Codex, GitHub Copilot, Claude Code and others) working in this repository.
-People start with [README.md](README.md); it documents every feature.
+People start with [README.md](README.md); [docs/MANUAL.md](docs/MANUAL.md) documents every feature.
 
 ## What this is
 
 An animated presentation template with a presenter view and a built-in editor, delivered as **one offline HTML
 file** (`Presentation.html`). The file needs no server, no network and no libraries; it runs in Chrome and Edge.
-The source is split into small files in `src/`, and `build.py` joins them and embeds fonts and images.
+`Presentation.html` in the repository root is the product and is committed. Its source is split into small files in
+`source/src/`, and `source/build.py` joins them into `Presentation.html` and embeds fonts and images.
+**Paths below are relative to `source/`** unless they start with `/`.
 
 ## Layout
 
@@ -23,13 +25,17 @@ The source is split into small files in `src/`, and `build.py` joins them and em
 | `build.py` | the build (its docstring lists the options) |
 | `tools/test.mjs`, `tools/test/` | browser tests: a small CDP harness and 13 suites for the editor and the presenter view |
 | `tools/deliver.py`, `tools/*-shots.mjs`, `tools/ui-audit*.mjs` | delivery, screenshots, layout and action audits |
-| `.claude/skills/animated-presentation/` | the skill for changing a **built** presentation file (see below) |
-| `docs/` | screenshots used by the README |
+| `/.claude/skills/animated-presentation/` | the skill for changing a **built** presentation file (see below) |
+| `/Presentation.html` | the built presentation (commit it with every change to the source) |
+| `/docs/` | the manual (`MANUAL.md`), the changes per version (`CHANGELOG.md`), screenshots |
+| `/README.md` | the short introduction for people; keep it short |
 
 ## Commands
 
+Run these from `source/`:
+
 ```
-python build.py --preview          # builds Presentation.html, index.html and _preview.html (used by the tests)
+python build.py --preview          # builds ../Presentation.html, index.html and _preview.html (used by the tests)
 node tools/test.mjs                # the suites for what changed since the last run that passed
 node tools/test.mjs --all          # every suite (before a delivery)
 node tools/test.mjs editor-core    # named suites
@@ -45,7 +51,8 @@ Node 22+ and Chrome or Edge are needed for the tests; Python 3.9+ for the build.
 - **One file, offline.** No CDN, no network requests, no libraries. New fonts go into `fonts/` (OFL) and
   `src/css/01-fonts.css` (`tools/get-fonts.py` writes both).
 - **Interface texts** go into `src/interface-texts.json`; the code uses `ui('key')`. Keys are unique.
-- **The README documents every feature.** Change it in the same change as the code.
+- **The manual (`/docs/MANUAL.md`) documents every feature.** Change it in the same change as the code, add a line to
+  `/docs/CHANGELOG.md`, and rebuild and commit `/Presentation.html`. Only touch `/README.md` for big changes.
 - **Comments:** every function has a one-line comment that says what it does. Plain words, full names.
 - **Patching code with scripts:** never append a `// …` or an unclosed `/* …` comment to a replacement that sits in the
   middle of a line or expression; it has silently broken unrelated code. Put comments on their own line.
@@ -62,9 +69,9 @@ Node 22+ and Chrome or Edge are needed for the tests; Python 3.9+ for the build.
 
 ## The skill
 
-`.claude/skills/animated-presentation/SKILL.md` explains how to change a built `Presentation.html` (or a copy) without
+`/.claude/skills/animated-presentation/SKILL.md` explains how to change a built `Presentation.html` (or a copy) without
 its editor: texts, translations, slides from templates, notes, times, themes, click steps, checks. Its script
 `scripts/deck.py` (Python, no packages) reads, changes and validates the file; `scripts/render_check.mjs` opens it in
 a browser and reports layout and script problems. Use it whenever the task is about a presentation file rather than
-the source in `src/`. Claude Code and GitHub Copilot load it from `.claude/skills/` by themselves; Codex: read that
+the source in `source/src/`. Claude Code and GitHub Copilot load it from `.claude/skills/` by themselves; Codex: read that
 `SKILL.md` before such a task.
