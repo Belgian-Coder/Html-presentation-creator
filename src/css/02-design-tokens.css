@@ -1,0 +1,49 @@
+/* ===========================================================================
+   2. DESIGN TOKENS
+   Colours, fonts and motion in one place. Everything else uses these names.
+   =========================================================================== */
+:root {
+  color-scheme: dark;
+
+  /* colours: always 6-digit hex (#rrggbb); the colour pickers and the script animations read them.
+     These are the fallback: the active theme in the THEMES block (end of the HTML) is applied on top,
+     so change colours there. */
+  --color-background: #0b1a20;
+  --color-surface: #12272f;              /* cards, buttons, panels */
+  --color-line: #24424b;                 /* borders, background grid, inactive bars */
+  --color-text: #ecf3f1;
+  --color-text-muted: #9bb5b8;
+  --color-accent: #f4b63f;               /* amber: the one bold colour */
+  --color-teal: #45c1b6;                 /* the harness, checks that pass */
+  --color-rose: #ef7d6d;                 /* watch-outs, plans that changed */
+  --color-violet: #a99cf4;               /* the developer lane */
+  --color-presenter-background: #071216;
+
+  /* fonts */
+  --font-display: "Bricolage Grotesque", "Segoe UI", system-ui, sans-serif;   /* titles and big numbers */
+  --font-body: "Instrument Sans", "Segoe UI", system-ui, sans-serif;          /* running text */
+  --font-mono: "JetBrains Mono", ui-monospace, Consolas, monospace;           /* labels, small print */
+  /* a theme (themes.json) can set the three fonts above and these (THEME_STYLE_TOKENS in js/01) */
+  --radius-scale: 1;              /* corners: 0 square, 1 as designed, more rounder */
+  --title-tracking: -.02em;       /* letter spacing of titles */
+  --display-stretch: 100%;        /* width of title letters (a wide font: 125%) */
+  /* the theme's fonts as resolved here: All slides › Fonts swaps titles and text with these (never a loop) */
+  --font-theme-display: var(--font-display);
+  --font-theme-body: var(--font-body);
+  --font-theme-mono: var(--font-mono);
+
+  /* motion: one set of curves and durations everywhere */
+  --ease-out: cubic-bezier(.2,.75,.2,1);       /* quick start, soft landing */
+  /* springy: overshoots and settles (click effects "pop" and "flip") */
+  --ease-elastic: linear(0, .22 4%, .66 9%, 1.06 15%, 1.2 19%, 1.18 23%, 1.03 30%, .96 36%, .98 42%, 1.01 50%, 1 62%, 1);
+  --ease-in-out: cubic-bezier(.5,0,.2,1);
+  --ease-pop: cubic-bezier(.3,1.5,.5,1);       /* overshoots a little, for things that pop in */
+  --ease-in: cubic-bezier(.5,0,.75,0);         /* things that leave */
+  --ease-drop: cubic-bezier(.2,.9,.25,1.15);   /* letters that drop in */
+  --duration-fast: .26s;
+  --duration-medium: .45s;
+  --duration-slow: .8s;
+  --scene-enter-delay: 300ms;                  /* the incoming slide waits for the outgoing one */
+  --reveal-stagger: 130ms;                     /* time between items that rise in one after another */
+}
+

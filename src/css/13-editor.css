@@ -1,0 +1,726 @@
+/* ===========================================================================
+   13. EDITOR (E): slide list, canvas and panel (script sections 17, 18 and 19)
+   The editor covers the whole window. Its slide in the middle is a still
+   copy (class still-slide), so it shows every item in its end state.
+   =========================================================================== */
+.deck.is-audience #btnEditor { display: none; }
+.editor { --left-width: 236px; --right-width: 420px; --tab-width: 26px;
+  position: absolute; inset: 0; z-index: 60; display: grid; grid-template-columns: var(--left-width) minmax(0, 1fr) var(--right-width); grid-template-rows: auto minmax(0, 1fr) auto auto; overflow: clip;   /* clip: a scrollIntoView never shifts the whole editor */
+  background: var(--color-presenter-background); color: var(--color-text); font-family: var(--font-body); font-size: .95rem; user-select: text; -webkit-user-select: text; }
+.editor[hidden] { display: none; }
+.deck.is-editing .toast { z-index: 90; top: auto; bottom: 64px; }   /* in the editor: low, never over the top bar */
+.deck.is-editing .controls { display: none; }   /* no presenting while editing */
+/* from inside the editor, Settings is for the theme and settings: printing, Save a copy, templates and booth mode work from the presentation */
+.deck.is-editing :is(#btnSaveCopy, #btnPrintSlides, #btnPrintHandout, #btnStartBooth, #btnShowTemplates) { display: none !important; }
+.deck.is-editing .settings-panel { z-index: 80; }
+.editor button { all: unset; cursor: pointer; padding: 5px 10px; border-radius: 8px; border: 1px solid var(--color-line); background: var(--color-surface); color: var(--color-text); font-size: .9rem; white-space: nowrap; }
+.editor button:hover:not(:disabled) { border-color: var(--color-accent); }
+.editor button:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 2px; }
+.editor button:disabled { opacity: .4; cursor: default; }
+.editor button.is-primary { border-color: var(--color-accent); color: var(--color-accent); font-weight: 600; }
+/* v216: buttons in the panel are quiet (no outline until you point at them); a chosen one keeps its accent (later rules) */
+.editor-panel-body button { border-color: transparent; background: color-mix(in srgb, var(--color-text) 7%, var(--color-surface)); font-size: .86rem; padding: 4px 10px; }
+.editor input, .editor select, .editor textarea { font: inherit; font-size: .92rem; color: var(--color-text); background: var(--color-surface); border: 1px solid var(--color-line); border-radius: 6px; padding: 4px 8px; box-sizing: border-box; width: 100%; }
+.editor textarea { resize: vertical; line-height: 1.4; }
+.editor :is(input, select, textarea):focus { outline: 2px solid var(--color-accent); outline-offset: 0; }
+
+/* top bar */
+.editor-bar { grid-column: 1 / -1; display: flex; align-items: center; gap: 10px; padding: 6px 12px; border-bottom: 1px solid var(--color-line); user-select: none; }
+.editor-bar-spacer { flex: 1; }
+/* the menu bar (section 20c) */
+.editor-menubar { display: flex; gap: 0; }
+.editor .editor-menubar button { border: 0; background: none; padding: 5px 10px; border-radius: 6px; }
+.editor .editor-menubar button:hover, .editor .editor-menubar button.is-open { background: color-mix(in srgb, var(--color-accent) 18%, transparent); outline: none; }
+.editor .editor-menubar button:focus-visible { background: color-mix(in srgb, var(--color-accent) 18%, transparent); outline: 2px solid var(--color-accent); outline-offset: 1px; }
+.editor .editor-menubar-menu { width: max-content; min-width: 260px; max-width: calc(100vw - 16px); }   /* as wide as its longest row with its key */
+.editor-menubar-menu button { display: grid !important; grid-template-columns: 18px 1fr auto; gap: 8px; align-items: center; }
+.editor-menubar-menu .menu-check { color: var(--color-accent); }
+.editor-menubar-menu kbd { font: .78rem var(--font-body); color: var(--color-text-muted); }
+.editor-menubar-menu [aria-disabled="true"] { opacity: .45; }
+/* the docks: the slide list (left) and the panel (right); not pinned, they hide to a tab at the edge */
+.editor-dock-head { display: flex; align-items: center; justify-content: space-between; padding: 6px 10px; border-bottom: 1px solid var(--color-line); font-size: .8rem; letter-spacing: .06em; text-transform: uppercase; color: var(--color-text-muted); user-select: none; }
+.editor .editor-pin { border: 0; background: none; padding: 2px 6px; filter: grayscale(1); opacity: .55; rotate: 45deg; transition: rotate .15s; }
+.editor .editor-pin.is-pinned { filter: none; opacity: 1; rotate: 0deg; }
+.editor .editor-edge-tab { display: none; }   /* (.editor button would show it) only for a dock that hides */
+.editor.left-unpinned { --left-width: var(--tab-width); }
+.editor.right-unpinned { --right-width: var(--tab-width); }
+.editor.left-unpinned .editor-edge-tab.is-left, .editor.right-unpinned .editor-edge-tab.is-right { display: grid; place-items: center; grid-row: 2 / 4; z-index: 31; border-radius: 0; border-width: 0 1px; padding: 0; background: var(--color-surface); }
+.editor .editor-edge-tab.is-left { grid-column: 1; }
+.editor .editor-edge-tab.is-right { grid-column: 3; }
+.editor-edge-tab span { writing-mode: vertical-rl; rotate: 180deg; font-size: .78rem; letter-spacing: .1em; text-transform: uppercase; color: var(--color-text-muted); }
+.editor-edge-tab.is-right span { rotate: 0deg; }
+.editor.left-unpinned .editor-slides, .editor.right-unpinned .editor-panel { grid-row: 2 / 4; z-index: 32; background: var(--color-presenter-background); box-shadow: 0 0 40px rgba(0, 0, 0, .5); transition: translate .14s var(--ease-out), visibility .14s; visibility: hidden; }
+.editor.left-unpinned .editor-slides { grid-column: 1 / 3; justify-self: start; width: 236px; translate: -100% 0; }
+.editor.right-unpinned .editor-panel { grid-column: 2 / 4; justify-self: end; width: 420px; translate: 100% 0; }
+.editor.left-unpinned .editor-slides.is-open, .editor.right-unpinned .editor-panel.is-open { translate: 0 0; visibility: visible; }
+.editor .editor-slides { grid-row: 2 / 4; grid-column: 1; }
+.editor .editor-panel { grid-row: 2 / 4; grid-column: 3; }
+.editor .editor-canvas { grid-row: 2; grid-column: 2; }
+/* the status bar */
+.editor-statusbar { grid-column: 1 / -1; grid-row: 4; display: flex; align-items: center; gap: 16px; padding: 3px 12px; border-top: 1px solid var(--color-line); font-size: .8rem; color: var(--color-text-muted); user-select: none; }
+.editor-statusbar .editor-status { margin-left: 0; }
+.editor-statusbar .status-selection { flex: 1; font-family: var(--font-mono); font-size: .75rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.editor-statusbar .editor-zoom { position: static; padding: 0; border: 0; background: none; }
+.editor-statusbar button { padding: 1px 8px !important; font-size: .78rem !important; }
+.editor-title { font-family: var(--font-mono); letter-spacing: .12em; text-transform: uppercase; color: var(--color-teal); }
+.editor-file { font-family: var(--font-mono); color: var(--color-text-muted); }
+.editor-bar-group { display: flex; gap: 6px; }
+.editor-status { margin-left: auto; color: var(--color-teal); }
+.editor-status.is-unsaved { color: var(--color-accent); }
+
+/* slide list */
+.editor-slides { display: flex; flex-direction: column; min-height: 0; border-right: 1px solid var(--color-line); }
+.editor-slide-list { list-style: none; margin: 0; padding: 10px; overflow: auto; flex: 1; display: grid; gap: 8px; align-content: start; }
+.editor-slide-list li { display: grid; grid-template-columns: 22px minmax(0, 1fr); gap: 4px 6px; padding: 6px; border-radius: 8px; border: 2px solid transparent; cursor: pointer; }
+.editor-slide-list li:hover { background: var(--color-surface); }
+.editor-slide-list li.is-selected { border-color: var(--color-accent); background: var(--color-surface); }
+.editor-slide-list li.is-drop-before { box-shadow: 0 -3px 0 var(--color-teal); }
+.editor-slide-number { font-family: var(--font-mono); color: var(--color-accent); }
+.editor-slide-title { grid-column: 2; font-size: .85rem; color: var(--color-text-muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.editor-badge { grid-column: 2; justify-self: start; font-size: .7rem; padding: 0 6px; border-radius: 999px; border: 1px solid var(--color-line); color: var(--color-text-muted); }
+.editor-slide-actions { display: flex; flex-wrap: wrap; gap: 6px; padding: 10px; border-top: 1px solid var(--color-line); }
+/* small pictures of slides: a 1600 x 900 slide scaled to the width of its box */
+.editor-thumb { position: relative; aspect-ratio: 16 / 9; overflow: hidden; border-radius: 4px; background: var(--color-background); border: 1px solid var(--color-line); }
+.editor-thumb-stage { position: absolute; left: 0; top: 0; width: 1600px; height: 900px; transform-origin: 0 0; transform: scale(var(--thumb-scale, .11)); pointer-events: none; }
+.editor-slide-list .editor-thumb-stage { --thumb-scale: .1125; }
+
+/* canvas */
+.editor-canvas { position: relative; min-width: 0; min-height: 0; overflow: hidden; }
+.editor-canvas-scroll { position: absolute; inset: 0; overflow: auto; display: grid; padding: 16px; box-sizing: border-box; }   /* the zoom bar has the strip below */
+.editor-stage-box { margin: auto; flex: none; position: relative; box-shadow: 0 10px 40px rgba(0, 0, 0, .4); border-radius: 6px; overflow: hidden; background: var(--color-background); }
+.editor-stage { position: absolute; left: 0; top: 0; width: 1600px; height: 900px; transform-origin: 0 0; font-size: 1rem; }   /* (as when presenting: the editor's own .95rem never reaches the slide) */
+/* every copy of a slide in the editor (the slide list, the layouts, the overview) in the presentation's text size too */
+.editor .scene { font-size: 1rem; }
+.editor-stage .scene { cursor: default; }
+.editor-stage [contenteditable="true"] { cursor: text; outline: none; }
+/* example text (a layout's "Topic", Insert's "Point 3"): dotted underline until it is typed over (18 markSampleTexts) */
+.editor-stage .is-sample-text { text-decoration: underline dotted color-mix(in srgb, var(--color-accent) 75%, transparent); text-decoration-thickness: .06em; text-underline-offset: .18em; }
+.editor-stage [contenteditable="true"]:empty { display: inline-block; min-width: 3em; min-height: 1em; background: color-mix(in srgb, var(--color-teal) 18%, transparent); }   /* an emptied text stays clickable */
+.editor-stage [contenteditable="true"]:hover { box-shadow: 0 0 0 1px color-mix(in srgb, var(--color-teal) 60%, transparent); }
+.editor-stage [contenteditable="true"]:focus { box-shadow: 0 0 0 2px var(--color-teal); }
+.editor-stage .agenda-item, .editor-stage video { pointer-events: auto; }
+.editor-overlay { position: absolute; inset: 0; pointer-events: none; z-index: 30; }
+.editor-selection { position: absolute; box-sizing: border-box; outline: 3px solid var(--color-accent); outline-offset: 4px; border-radius: 4px; }
+.editor-selection[hidden] { display: none; }
+/* selection handles (section 18): 8 to resize, a round one above to turn, a grip below to move; the same size on screen
+   at any zoom (--editor-scale is the canvas's scale). A block in the layout has only the grip: drag it to another place
+   in the layout, or out of it to place it freely. */
+.editor-selection { --handle: calc(13px / var(--editor-scale, .5)); --line: calc(2px / var(--editor-scale, .5)); }
+.editor-move, .editor-handle, .editor-rotate { display: none; position: absolute; pointer-events: auto; box-sizing: border-box; }
+.editor-handle { width: var(--handle); height: var(--handle); margin: calc(var(--handle) / -2) 0 0 calc(var(--handle) / -2); background: #fff; border: var(--line) solid var(--color-accent); border-radius: 3px; }
+.editor-handle[data-dir="nw"] { left: -4px; top: -4px; cursor: nwse-resize; }
+.editor-handle[data-dir="n"] { left: 50%; top: -4px; cursor: ns-resize; }
+.editor-handle[data-dir="ne"] { left: calc(100% + 4px); top: -4px; cursor: nesw-resize; }
+.editor-handle[data-dir="e"] { left: calc(100% + 4px); top: 50%; cursor: ew-resize; }
+.editor-handle[data-dir="se"] { left: calc(100% + 4px); top: calc(100% + 4px); cursor: nwse-resize; }
+.editor-handle[data-dir="s"] { left: 50%; top: calc(100% + 4px); cursor: ns-resize; }
+.editor-handle[data-dir="sw"] { left: -4px; top: calc(100% + 4px); cursor: nesw-resize; }
+.editor-handle[data-dir="w"] { left: -4px; top: 50%; cursor: ew-resize; }
+.editor-rotate { width: var(--handle); height: var(--handle); left: 50%; top: calc(-4px - var(--handle) * 2.3); margin-left: calc(var(--handle) / -2); border-radius: 50%; background: var(--color-accent); cursor: grab; }
+.editor-rotate::before { content: ''; position: absolute; left: 50%; top: 100%; width: var(--line); height: calc(var(--handle) * .6); margin-left: calc(var(--line) / -2); background: var(--color-accent); pointer-events: none; }   /* stops short of the top handle */
+.editor-move { left: 50%; top: calc(100% + 4px + var(--handle) * 1.1); width: calc(var(--handle) * 4); height: calc(var(--handle) * .8); margin-left: calc(var(--handle) * -2); border-radius: 999px; background: var(--color-accent); cursor: move; }
+.editor-selection.is-free:not(.is-locked) :is(.editor-handle, .editor-rotate, .editor-move), .editor-selection.can-reorder:not(.is-locked) .editor-move { display: block; }
+/* a picture in the layout: its four corners (a drag places it freely and sizes it, js/18 canFreeResize) */
+.editor-selection.can-free-resize:not(.is-locked) .editor-handle:is([data-dir="nw"], [data-dir="ne"], [data-dir="sw"], [data-dir="se"]) { display: block; }
+.editor-selection.can-reorder .editor-move { cursor: grab; }
+/* the move grip shows what it is: dots to grab (its tooltip says Drag to move) */
+.editor-move { height: calc(var(--handle) * 1.25); display: none; place-items: center; }
+.editor-move::after { content: "⠿"; color: var(--color-background); font-size: calc(var(--handle) * 1.1); line-height: 1; pointer-events: none; }
+.editor-selection.is-free:not(.is-locked) .editor-move, .editor-selection.can-reorder:not(.is-locked) .editor-move { display: grid; }
+/* near an edge of the slide (which cuts off what lies outside) the handles move inside */
+.editor-selection.is-near-top .editor-rotate { top: calc(var(--off-top, 0px) + var(--handle) * .6); }
+.editor-selection.is-near-top .editor-rotate::before { display: none; }
+.editor-selection.is-near-bottom .editor-move { top: auto; bottom: calc(var(--off-bottom, 0px) + var(--handle) * .6); }
+.editor-selection.is-near-left .editor-handle[data-dir$="w"] { margin-left: var(--off-left, 0px); }
+.editor-selection.is-near-right .editor-handle[data-dir$="e"] { margin-left: calc(var(--handle) * -1 - var(--off-right, 0px)); }
+.editor-selection.is-near-top .editor-handle[data-dir^="n"] { margin-top: var(--off-top, 0px); }
+.editor-selection.is-near-bottom .editor-handle[data-dir^="s"] { margin-top: calc(var(--handle) * -1 - var(--off-bottom, 0px)); }
+/* while dragging: x, y or width × height near the pointer; the line where a block goes; the box where it lands placed freely */
+.editor-readout { position: absolute; padding: calc(3px / var(--editor-scale, .5)) calc(8px / var(--editor-scale, .5)); border-radius: calc(6px / var(--editor-scale, .5)); background: var(--color-presenter-background); color: var(--color-accent); font: 600 calc(13px / var(--editor-scale, .5)) var(--font-mono); white-space: nowrap; pointer-events: none; }
+.editor-insert-line { position: absolute; background: var(--color-teal); border-radius: 2px; pointer-events: none; }
+.editor-drop-box { position: absolute; border: calc(2px / var(--editor-scale, .5)) dashed var(--color-accent); border-radius: 6px; pointer-events: none; }
+.editor-drop-box::after { content: attr(data-label); position: absolute; left: 0; top: 100%; margin-top: calc(6px / var(--editor-scale, .5)); padding: calc(2px / var(--editor-scale, .5)) calc(8px / var(--editor-scale, .5)); border-radius: 6px; background: var(--color-accent); color: var(--color-presenter-background); font: 600 calc(13px / var(--editor-scale, .5)) var(--font-body); white-space: nowrap; }
+:is(.editor-readout, .editor-insert-line, .editor-drop-box)[hidden] { display: none; }
+.editor-stage .scene .is-editor-dragged { opacity: .45; }
+.editor-guide { position: absolute; background: var(--color-rose); }
+.editor-guide[hidden] { display: none; }
+.editor-guide.is-vertical { top: 0; bottom: 0; width: 2px; margin-left: -1px; }
+.editor-guide.is-horizontal { left: 0; right: 0; height: 2px; margin-top: -1px; }
+/* equal spacing (section 20): a short bar across each equal gap */
+.editor-gap { position: absolute; background: var(--color-rose); pointer-events: none; }
+/* Alt over another element (section 20): the distances, with the number in slide pixels */
+.editor-distance { position: absolute; background: var(--color-rose); pointer-events: none; }
+.editor-distance.is-x { height: calc(2px / var(--editor-scale, .5)); translate: 0 -50%; }
+.editor-distance.is-y { width: calc(2px / var(--editor-scale, .5)); translate: -50% 0; }
+.editor-distance::after { content: attr(data-label); position: absolute; left: 50%; top: 50%; translate: -50% -50%; padding: calc(1px / var(--editor-scale, .5)) calc(6px / var(--editor-scale, .5)); border-radius: 4px; background: var(--color-rose); color: #fff; font: 600 calc(12px / var(--editor-scale, .5)) var(--font-mono); white-space: nowrap; }
+.editor-gap.is-x { height: 2px; margin-top: -1px; }
+.editor-gap.is-y { width: 2px; margin-left: -1px; }
+.editor-stage .is-previewing { transition: none !important; }
+
+/* panel */
+.editor-panel { display: flex; flex-direction: column; min-height: 0; border-left: 1px solid var(--color-line); }
+.editor-tabs { display: flex; gap: 6px; padding: 10px 12px; border-bottom: 1px solid var(--color-line); }
+.editor-tabs button.is-selected { border-color: var(--color-accent); color: var(--color-accent); }
+.editor-panel-body { overflow: auto; padding: 12px 14px 40px; display: grid; gap: 10px; align-content: start; }
+.editor-panel-body h4 { margin: 10px 0 0; font-family: var(--font-mono); font-size: .78rem; letter-spacing: .12em; text-transform: uppercase; color: var(--color-teal); }
+/* a section heading folds its section (17: foldSections): ▾ open, ▸ folded */
+.editor-panel-body .editor-section-head { display: flex; align-items: center; gap: 6px; cursor: pointer; user-select: none; border-radius: 6px; padding: 3px 4px; margin-left: -4px; }
+.editor-panel-body .editor-section-head::before { content: "▾"; font-size: .9em; width: 1em; transition: rotate .15s; }
+.editor-panel-body .editor-section-head[aria-expanded="false"]::before { rotate: -90deg; }
+.editor-panel-body .editor-section-head:hover { background: color-mix(in srgb, var(--color-teal) 12%, transparent); outline: none; }
+.editor-panel-body .editor-section-head:focus-visible { background: color-mix(in srgb, var(--color-teal) 12%, transparent); outline: 2px solid var(--color-accent); outline-offset: 1px; }
+/* the keyboard's place (F6 goes round the slide, the slide list and the panel): a ring that shows where it is */
+.editor :is(.editor-slide-list li, .editor-menu button, .editor-menubar-menu button, select, input, summary, [role="button"]):focus-visible { outline: 2px solid var(--color-accent); outline-offset: 1px; }
+.editor .editor-canvas:focus-visible { outline: 2px solid var(--color-accent); outline-offset: -3px; }
+.editor-panel-body .editor-section { display: grid; gap: inherit; }
+.editor-panel-body .editor-section[hidden] { display: none; }
+/* the path at the top of the Element tab: plain words, each part a button that selects it */
+.editor-path button { all: unset; cursor: pointer; color: var(--color-teal); border-radius: 4px; padding: 0 2px; }
+.editor-path button:hover, .editor-path button:focus-visible { background: color-mix(in srgb, var(--color-teal) 16%, transparent); }
+.editor-path b { color: var(--color-text); font-weight: 600; }
+/* pictures dragged over the slide; a slide whose content runs off its bottom */
+.editor-canvas.is-dropping { outline: 3px dashed var(--color-accent); outline-offset: -10px; }
+.status-overflow { color: var(--color-rose); font-weight: 600; cursor: pointer; text-decoration: underline dotted; }
+/* nothing selected: how to start, at the top of the Slide tab */
+.editor-start-hint { margin: 0; padding: 10px 12px; border-radius: 8px; border: 1px dashed var(--color-accent); color: var(--color-text); font-size: .85rem; }
+/* Image › Brightness, Contrast, Colour: three sliders side by side */
+/* Style › More text options: a folded group (a line with ▸ / ▾) */
+.editor-more-text { display: grid; gap: 8px; }
+.editor-more-text > summary { cursor: pointer; color: var(--color-teal); font-size: .82rem; padding: 4px 0; }
+.editor-more-text[open] > summary { margin-bottom: 2px; }
+/* All slides › Theme: a gallery of small slides in each theme's colours */
+.theme-gallery { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+.theme-tile { display: grid; gap: 4px; padding: 4px; border-radius: 8px; border: 1px solid var(--color-line); background: none; text-align: center; cursor: pointer; min-width: 0; }
+.theme-tile[aria-pressed="true"] { border-color: var(--color-accent); box-shadow: 0 0 0 2px var(--color-accent); }
+.theme-swatch { display: flex; align-items: flex-end; gap: 3px; aspect-ratio: 16 / 9; padding: 5px; border-radius: 5px; font: 700 1rem var(--font-display, inherit); }
+.theme-swatch b { margin-right: auto; align-self: flex-start; }
+.theme-swatch i { width: 9px; height: 9px; border-radius: 50%; }
+.theme-name { font-size: .72rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+/* ✂ Crop… (19 openCrop): the whole picture, the part that shows in a frame (the rest darkened), four corners */
+.crop-tool { grid-column: 1 / -1; display: grid; gap: 12px; justify-items: center; }
+.crop-area { position: relative; overflow: hidden; touch-action: none; user-select: none; line-height: 0; }
+.crop-area img { display: block; max-width: min(900px, 80vw); max-height: 60vh; }
+.crop-box { position: absolute; outline: 2px solid var(--color-accent); box-shadow: 0 0 0 9999px rgb(0 0 0 / .6); cursor: move; }
+.crop-box i { position: absolute; width: 16px; height: 16px; border-radius: 4px; background: var(--color-accent); }
+.crop-box [data-corner="nw"] { left: -8px; top: -8px; cursor: nwse-resize; }
+.crop-box [data-corner="se"] { right: -8px; bottom: -8px; cursor: nwse-resize; }
+.crop-box [data-corner="ne"] { right: -8px; top: -8px; cursor: nesw-resize; }
+.crop-box [data-corner="sw"] { left: -8px; bottom: -8px; cursor: nesw-resize; }
+/* Animations tab: a word before each order / click number; the Slide tab's transition list hidden (the pictures choose; its speed stays) */
+/* a tab's explanation folded under one line (Layers) */
+.editor-intro > summary { cursor: pointer; color: var(--color-text-muted); font-size: .8rem; }
+.anim-num { display: inline-flex; align-items: center; gap: 4px; }
+.anim-num small { color: var(--color-text-muted); font-size: .72rem; }
+.anim-num input { width: 4.2em; }
+.editor-transition-row > .editor-field:first-child { display: none; }
+.editor-adjust input[type="range"] { width: 100%; accent-color: var(--color-accent); }
+.editor-field { display: grid; gap: 3px; }
+.editor-field > span { font-size: .85rem; color: var(--color-text-muted); }
+.editor-field small, .editor-note { font-size: .8rem; color: var(--color-text-muted); margin: 0; }
+.editor-note.is-warning { color: var(--color-accent); }
+.editor-check { display: flex; gap: 8px; align-items: flex-start; }
+.editor-check input { width: auto; margin-top: 3px; accent-color: var(--color-accent); }
+.editor-buttons { display: flex; flex-wrap: wrap; gap: 6px; }
+.editor-row { display: flex; gap: 8px; align-items: end; }
+.editor-row > * { flex: 1; min-width: 0; }
+.editor-row:not(:has(> :not(.editor-field))) { flex-wrap: wrap; }   /* (rows of settings only; a row with buttons stays as it is) */
+.editor-row:not(:has(> :not(.editor-field))) > .editor-field { flex: 1 1 150px; }   /* (in a 300 px panel: one per line, nothing cut short) */
+.editor-path { margin: 0; font-size: .8rem; color: var(--color-text-muted); overflow-wrap: anywhere; }
+.editor-keyframes { display: grid; gap: 8px; padding: 10px; border: 1px solid var(--color-line); border-radius: 8px; }
+.editor-keyframe-table { width: 100%; border-collapse: collapse; table-layout: fixed; font-size: .75rem; }
+.editor-keyframe-table th { font-weight: 400; color: var(--color-text-muted); text-align: left; padding: 0 1px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.editor-keyframe-table th:last-child { width: 26px; }
+.editor-keyframe-table td { padding: 1px; }
+.editor-keyframe-table input { padding: 2px 3px; font-size: .8rem; min-width: 0; font-family: var(--font-mono); -moz-appearance: textfield; }
+.editor-keyframe-table input::-webkit-inner-spin-button, .editor-keyframe-table input::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+.editor-keyframe-table button { padding: 1px 6px; }
+.editor-keyframe-table .keyframe-ease { display: block; max-width: 100%; box-sizing: border-box; overflow: hidden; text-overflow: ellipsis; }   /* a long easing name never widens the panel */
+.editor-panel-body { grid-template-columns: minmax(0, 1fr); }   /* nothing in it makes the panel scroll sideways */
+.quickbar-count { padding: 0 8px; font-size: .78rem; color: var(--color-text-muted); white-space: nowrap; }
+.editor-align-menu { width: auto; min-width: 220px; }
+
+/* the template picker */
+.editor-dialog { position: absolute; inset: 0; z-index: 5; display: grid; place-items: center; background: rgba(0, 0, 0, .55); }
+.editor-dialog[hidden] { display: none; }
+.editor-dialog-card { width: min(1100px, calc(100% - 40px)); max-height: calc(100% - 60px); overflow: auto; background: var(--color-presenter-background); border: 1px solid var(--color-line); border-radius: 14px; padding: 18px; display: grid; gap: 14px; }
+.editor-dialog-head { display: flex; justify-content: space-between; align-items: center; font-size: 1.1rem; }
+.editor-template-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; }
+.editor-template-grid button { display: grid; gap: 6px; padding: 8px; white-space: normal; }
+/* Insert slides from another presentation (17 openImportDialog): the bar over the slides, a chosen slide ringed */
+.editor-shortcuts-head { margin: 18px 0 6px; }
+.editor-shortcuts-find { grid-column: 1 / -1; width: min(100%, 360px); }
+.editor-shortcuts-group { grid-column: 1 / -1; }
+.editor-shortcuts-group[hidden], .editor-shortcuts [hidden], .editor-shortcuts-present > div[hidden] { display: none; }
+.editor-shortcuts-present > div { display: flex; justify-content: space-between; gap: 12px; padding: 3px 0; border-bottom: 1px solid var(--color-line); }
+.editor-shortcuts-present kbd { font: .8rem var(--font-mono); margin-left: 4px; }
+.editor-panel-body [data-action="anim-after-previous"] { white-space: normal; max-width: 100%; }   /* (a long label wraps: the panel never scrolls sideways) */
+.editor-import-bar { grid-column: 1 / -1; display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
+.editor-import-bar .editor-note { flex: 1 1 320px; margin: 0; }
+.editor-template-grid button[data-import-index][aria-pressed="true"] { outline: 3px solid var(--color-accent); outline-offset: 1px; }
+.editor-import-go:not(:disabled) { background: var(--color-accent); color: var(--color-background); }
+.editor-template-grid .editor-thumb-stage { --thumb-scale: .14; }
+
+/* Animations tab (section 19): every element that appears or moves, with the slide and per click */
+.anim-row { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 4px 8px; align-items: center; padding: 4px 6px; border-radius: 6px; }
+/* one row per element: its name and ▲ ▼ · what it does and its order (or click) number · its timeline (v212: nothing overlaps in a narrow panel) */
+.editor .anim-row > .anim-label { grid-column: 1; grid-row: 1; text-align: left; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; box-sizing: border-box; max-width: 100%; justify-self: stretch; }
+.anim-row:not(:has(> .anim-move)) > .anim-label { grid-column: 1 / -1; }
+.anim-row > .anim-move { grid-column: 2; grid-row: 1; }
+.anim-row > .anim-action { grid-column: 1; grid-row: 2; font-size: .78rem; color: var(--color-text-muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
+.anim-row > :is(.anim-num, span:empty) { grid-column: 2; grid-row: 2; }
+.anim-row > .anim-track { grid-row: 3; }
+.anim-row.is-selected { background: color-mix(in srgb, var(--color-accent) 16%, transparent); }
+/* the canvas while "Play slide" runs: the slide moves like in the presentation */
+.editor-stage.is-playing-preview .editor-selection { display: none; }
+/* the editor keys (? or the Keys button): in the same window as the templates */
+.editor-shortcuts { grid-column: 1 / -1; display: grid; grid-template-columns: max-content 1fr; gap: 6px 18px; margin: 0; }
+.editor-shortcuts dt { font-family: var(--font-mono); color: var(--color-accent); }
+.editor-shortcuts dd { margin: 0; }
+/* the timeline under each row: when it starts and how long it moves (a loop: striped) */
+.anim-track { grid-column: 1 / -1; position: relative; height: 6px; border-radius: 3px; background: color-mix(in srgb, var(--color-line) 60%, transparent); }
+.anim-bar { position: absolute; top: 0; bottom: 0; border-radius: 3px; background: var(--color-accent); }
+.anim-bar.is-loop { background: repeating-linear-gradient(90deg, var(--color-accent) 0 6px, transparent 6px 10px); }
+/* several elements (Shift+click): a dashed outline around each */
+.editor-group-box { position: absolute; border: 2px dashed var(--color-accent); border-radius: 4px; pointer-events: none; }
+/* an invisible playing copy of the slide: the Animations tab reads the real timings from it */
+.editor-timing-probe { position: fixed; left: -10000px; top: 0; width: 1600px; height: 900px; visibility: hidden; pointer-events: none; }
+.editor-timing-probe .scene { opacity: 0; }
+/* Slide tab, ▶ Preview: the slide before and this one, playing over the canvas (section 20) */
+.editor-transition-preview { position: absolute; left: 0; top: 0; width: 1600px; height: 900px; transform-origin: 0 0; z-index: 3; background: var(--color-background); overflow: hidden; cursor: pointer; }
+.editor-timing-probe *, .editor-timing-probe *::before, .editor-timing-probe *::after { animation-play-state: paused !important; }   /* read, never played */
+/* right-click menu on the slide */
+.editor-menu { position: fixed; z-index: 95; width: 220px; display: grid; padding: 6px; background: var(--color-presenter-background); border: 1px solid var(--color-line);
+  border-radius: 10px; box-shadow: 0 12px 30px rgb(0 0 0 / .45); }
+.editor-menu[hidden] { display: none; }
+/* never taller than the window: a long menu scrolls (fitMenuOnScreen in js/17 also moves it up) */
+.editor-menu { max-height: calc(100vh - 32px); overflow-y: auto; overflow-x: hidden; overscroll-behavior: contain; }
+/* a menu taller than the window (Insert): two columns instead of a long scroll (openMenu in js/20) */
+.editor .editor-menubar-menu.is-columns { display: block; column-count: 2; column-gap: 6px; width: min(780px, calc(100vw - 16px)); }
+.editor-menubar-menu.is-columns > * { break-inside: avoid; }
+.editor-menubar-menu.is-columns > button { width: 100%; box-sizing: border-box; }
+.editor-menubar-menu.is-columns > hr { margin: 4px 0; }
+/* History (▾ next to Undo, section 20): the last changes, newest first */
+.editor-history { width: 300px; max-height: 60vh; overflow: auto; }
+.editor-history button { display: flex; justify-content: space-between; gap: 12px; }
+.editor-history small { color: var(--color-text-muted); font-family: var(--font-mono); }
+.editor .editor-history-button { padding-inline: 8px; }
+/* find an action (section 20c): a window at the top, rows with their keys */
+.editor-palette { position: fixed; z-index: 96; left: 50%; top: 72px; translate: -50% 0; width: min(560px, calc(100vw - 32px)); display: grid; gap: 6px; padding: 10px; border-radius: 12px; background: var(--color-presenter-background); border: 1px solid var(--color-line); box-shadow: 0 18px 48px rgba(0, 0, 0, .45); }
+.palette-input { width: 100%; font-size: 1.05rem; padding: 10px 12px; }
+.palette-list { max-height: min(56vh, 460px); overflow: auto; display: grid; }
+.palette-row { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 7px 10px; border-radius: 7px; cursor: pointer; }
+.palette-row.is-current { background: color-mix(in srgb, var(--color-accent) 20%, transparent); }
+.palette-row.is-disabled { opacity: .5; }
+.palette-row small { margin-left: 6px; color: var(--color-text-muted); font-size: .75rem; }
+.palette-row kbd { font: .75rem var(--font-mono); color: var(--color-text-muted); white-space: nowrap; }
+/* a setting found with Ctrl+K: where it is (its tab and section), and the glow on the field once it is opened */
+.palette-row .palette-where { margin-left: auto; font-size: .72rem; color: var(--color-text-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 45%; }
+.palette-hint { margin: 4px 6px 2px; font-size: .78rem; color: var(--color-text-muted); }
+.editor-panel-body .is-found { border-radius: 8px; animation: setting-found 2.2s ease-out; }
+@keyframes setting-found { 0%, 35% { box-shadow: 0 0 0 3px var(--color-accent); background: color-mix(in srgb, var(--color-accent) 16%, transparent); } 100% { box-shadow: 0 0 0 3px transparent; background: transparent; } }
+/* the bar above the selection */
+.editor-quickbar { position: fixed; z-index: 40; display: flex; gap: 2px; padding: 4px; border-radius: 10px; background: var(--color-presenter-background); border: 1px solid var(--color-line); box-shadow: 0 8px 24px rgba(0, 0, 0, .35); }
+.editor-quickbar[hidden] { display: none; }
+.editor-quickbar { flex-wrap: wrap; box-sizing: border-box; }
+.editor:has(.editor-dialog:not([hidden])) .editor-quickbar, .editor:has(.editor-textbar:not([hidden])) .editor-quickbar { display: none; }   /* (a dialog is open: the bar waits behind it) */   /* a narrow canvas: two rows, never over the slide list or the panel */
+.editor-quickbar button { padding: 4px 9px; font-size: .82rem; border: 0; background: none; border-radius: 6px; }
+.editor-quickbar button:hover:not([disabled]) { background: color-mix(in srgb, var(--color-accent) 18%, transparent); }
+.quickbar-gap { width: 1px; margin: 4px 3px; background: var(--color-line); }
+.editor-quickbar { transition: opacity .12s; }
+.editor-quickbar.is-faded { pointer-events: none; }
+.editor-quick-menu { width: 440px; max-width: calc(100vw - 16px); }
+/* number labels you can drag */
+.editor-field:has(> input[type="number"]:not([disabled])) > span { cursor: ew-resize; user-select: none; }
+body.is-scrubbing, body.is-scrubbing * { cursor: ew-resize !important; user-select: none !important; }
+/* an empty slide: how to start */
+.editor-empty-hint { position: absolute; left: 50%; top: 50%; translate: -50% -50%; z-index: 5; pointer-events: none; padding: 16px 22px; border-radius: 12px; border: 1px dashed var(--color-line); background: color-mix(in srgb, var(--color-presenter-background) 85%, transparent); color: var(--color-text-muted); }
+.editor-empty-hint[hidden] { display: none; }
+.editor-empty-hint p { margin: 0 0 6px; color: var(--color-text); font-weight: 600; }
+.editor-empty-hint ul { margin: 0; padding-left: 18px; }
+.editor-insert-menu { box-sizing: border-box; width: min(500px, calc(100vw - 16px)); max-height: calc(100vh - 80px); overflow: auto; }
+/* + Insert: groups of tiles, each with a small picture (a shape draws itself) */
+.editor-insert-menu .insert-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 2px; margin-bottom: 4px; }
+.editor-insert-menu { overflow-x: hidden; }
+.editor-menu .insert-tile { min-width: 0; overflow-wrap: anywhere; display: grid; justify-items: center; align-content: start; gap: 4px; padding: 8px 4px; text-align: center; font-size: .74rem; line-height: 1.2; }
+.insert-icon { display: grid; place-items: center; width: 28px; height: 28px; font-size: 1.25rem; line-height: 1; color: var(--color-teal); }
+.insert-icon svg { width: 24px; height: 24px; overflow: visible; }
+/* the welcome card, the first time the editor opens (20c showWelcome) */
+.editor-welcome { position: absolute; right: 16px; bottom: 16px; z-index: 6; box-sizing: border-box; width: min(360px, calc(100% - 32px)); max-height: calc(100% - 32px); overflow: auto; padding: 14px 16px; border-radius: 12px;
+  background: var(--color-presenter-background); border: 1px solid var(--color-accent); box-shadow: 0 14px 34px rgb(0 0 0 / .45); font-size: .85rem; }
+.editor-welcome h3 { margin: 0 0 6px; font-size: 1rem; color: var(--color-accent); }
+.editor-welcome ul { margin: 0 0 10px; padding-left: 18px; display: grid; gap: 4px; }
+.editor-welcome-ok { float: right; }
+/* once something is selected it folds to its title, so it never covers handles; a click on the title opens it again */
+.editor-welcome.is-small { width: auto; padding: 6px 12px; cursor: pointer; }
+.editor-welcome.is-small h3 { margin: 0; font-size: .85rem; }
+.editor-welcome.is-small h3::before { content: "💡 "; }
+.editor-welcome.is-small :is(ul, .editor-welcome-ok) { display: none; }
+.editor-menu-heading { margin: 4px 10px 2px; font-size: .75rem; letter-spacing: .06em; text-transform: uppercase; color: var(--color-text-muted); }
+/* a freely placed element can be dragged by its body (section 18, armBodyDrag): a text shows the text cursor until it moves */
+.editor-stage .scene .is-free:not([data-editor-locked]):not([contenteditable="true"]) { cursor: move; touch-action: none; }   /* touch: a drag moves it, it does not scroll */
+.editor.is-moving, .editor.is-moving * { user-select: none !important; -webkit-user-select: none !important; cursor: move !important; }
+.editor-menu button { text-align: left; border: 0; background: none; padding: 7px 10px; border-radius: 6px; }
+.editor-menu button:hover:not([disabled]), .editor-menu button:focus-visible { background: color-mix(in srgb, var(--color-accent) 18%, transparent); }
+.editor-menu hr { width: 100%; border: 0; border-top: 1px solid var(--color-line); margin: 4px 0; }
+/* zoom (section 19): - / the size / +, bottom right of the canvas; Ctrl+wheel and Ctrl+plus / minus / 0 too */
+.editor-zoom { position: absolute; right: 14px; bottom: 6px; z-index: 2; display: flex; gap: 4px; padding: 4px; border-radius: 10px; background: color-mix(in srgb, var(--color-presenter-background) 85%, transparent); border: 1px solid var(--color-line); }
+.editor .editor-zoom button { padding: 2px 9px; font-family: var(--font-mono); font-size: .82rem; }
+.editor-zoom-level { min-width: 4.2em; text-align: center; }
+/* the timeline bars "with the slide" can be dragged: later or earlier */
+.anim-track.is-draggable { height: 10px; border-radius: 5px; }
+.anim-track.is-draggable .anim-bar { cursor: grab; touch-action: none; border-radius: 5px; box-shadow: 0 0 0 1px color-mix(in srgb, var(--color-accent) 60%, transparent); }
+.anim-track.is-draggable .anim-bar:hover { filter: brightness(1.15); }
+.anim-row.is-dragging .anim-bar { cursor: grabbing; background: var(--color-teal); }
+/* timeline (section 20b): the ruler with the playhead, Record, keyframe diamonds and the segments between them */
+.anim-ruler-row { display: flex; flex-direction: column; align-items: stretch; gap: 6px; padding: 2px 6px 8px; }   /* the ruler exactly as wide as the bars under it */
+.anim-ruler-row .anim-record { align-self: flex-start; }
+.anim-record { padding: 3px 10px; border-radius: 999px; font-size: .78rem; }
+.anim-record.is-on { background: var(--color-rose); border-color: var(--color-rose); color: #fff; }
+.anim-ruler { position: relative; height: 26px; border-bottom: 1px solid var(--color-line); cursor: ew-resize; touch-action: none; }
+.anim-ruler > span:not(.anim-playhead) { position: absolute; bottom: 2px; translate: -50% 0; font: .68rem var(--font-mono); color: var(--color-text-muted); pointer-events: none; }
+.anim-ruler > span:not(.anim-playhead):first-child { translate: 0 0; }
+.anim-ruler > span { white-space: nowrap; }
+.anim-ruler > span.is-end { translate: -100% 0; }   /* the last second ends at the right edge */
+.anim-playhead { position: absolute; top: 0; bottom: -4px; width: 2px; margin-left: -1px; background: var(--color-rose); pointer-events: none; }
+.anim-playhead::after { content: attr(data-time); position: absolute; top: -2px; left: 6px; padding: 0 5px; border-radius: 4px; background: var(--color-rose); color: #fff; font: 600 .66rem var(--font-mono); white-space: nowrap; }
+.anim-track { overflow: visible; }
+.anim-key { position: absolute; top: 50%; width: 11px; height: 11px; margin: -5.5px 0 0 -5.5px; rotate: 45deg; background: #fff; border: 2px solid var(--color-accent); box-sizing: border-box; cursor: ew-resize; z-index: 2; touch-action: none; }
+.anim-key.is-hold { border-radius: 0; background: var(--color-accent); }
+.anim-key.is-dragging { background: var(--color-teal); }
+.anim-key.is-dragging::after { content: attr(data-at); position: absolute; top: -22px; left: 0; rotate: -45deg; font: .66rem var(--font-mono); white-space: nowrap; }
+.anim-segment { position: absolute; top: -3px; bottom: -3px; padding: 0; border: 0; background: transparent; cursor: pointer; z-index: 1; }
+.anim-segment:hover, .anim-segment:focus-visible { background: color-mix(in srgb, var(--color-teal) 40%, transparent); }
+.anim-segment.is-hold { background-image: repeating-linear-gradient(90deg, transparent 0 4px, color-mix(in srgb, var(--color-text) 35%, transparent) 4px 6px); }
+.keyframe-ease { padding: 2px 6px; font-size: .72rem; white-space: nowrap; }
+/* quick animations (section 20b): In / Emphasis / Out for the selected element */
+.anim-quick { display: grid; gap: 6px; margin-bottom: 10px; }
+.anim-quick-group { display: flex; flex-wrap: wrap; gap: 4px; align-items: center; }
+.anim-quick-group > span { width: 74px; font-size: .72rem; letter-spacing: .06em; text-transform: uppercase; color: var(--color-text-muted); }
+.anim-quick button { padding: 3px 9px; font-size: .78rem; border-radius: 999px; }
+.anim-quick button.is-current { background: color-mix(in srgb, var(--color-accent) 24%, transparent); border-color: var(--color-accent); }
+.anim-quick-none { justify-self: start; }
+.anim-timing input[type="number"] { width: 78px; padding: 2px 6px; font-size: .78rem; }
+.anim-row.is-snapped .anim-bar { outline: 2px solid var(--color-teal); outline-offset: 1px; }   /* the bar's start meets another bar */
+/* Record: a red frame around the slide */
+.editor.is-recording .editor-stage-box { outline: 3px solid var(--color-rose); outline-offset: 3px; }
+.editor.is-recording .editor-stage.is-playing-preview .editor-selection:not([hidden]) { display: block; }   /* in Record the handles stay, to move and turn */
+/* the easing window */
+.editor-ease { width: 460px; max-width: calc(100vw - 16px); }
+.ease-presets { display: grid; grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); gap: 4px; }
+.ease-presets button { display: grid; justify-items: center; gap: 2px; padding: 6px 4px; font-size: .72rem; text-align: center; }
+.ease-presets button.is-current { background: color-mix(in srgb, var(--color-accent) 22%, transparent); }
+.editor-ease svg polyline, .ease-line { fill: none; stroke: var(--color-accent); stroke-width: 2.5; }
+.editor-ease svg .ease-grid { fill: none; stroke: var(--color-line); stroke-width: 1; }
+.ease-custom { display: grid; grid-template-columns: auto 1fr; gap: 12px; align-items: start; margin-top: 8px; padding-top: 8px; border-top: 1px solid var(--color-line); }
+.ease-arm { stroke: var(--color-text-muted); stroke-width: 1.5; }
+.ease-handle { fill: var(--color-presenter-background); stroke: var(--color-accent); stroke-width: 3; cursor: grab; }
+.ease-editor.is-fixed :is(.ease-handle, .ease-arm) { display: none; }
+.ease-preview { position: relative; height: 20px; margin: 8px 16px 10px 8px; border-bottom: 1px solid var(--color-line); }
+.ease-dot { position: absolute; top: 4px; width: 14px; height: 14px; margin-left: -7px; border-radius: 50%; background: var(--color-accent); }
+/* the motion path on the canvas */
+/* Draw a path (section 20b): a crosshair over the slide, the line while you draw */
+.editor.is-drawing-path .editor-canvas, .editor.is-drawing-path .editor-canvas * { cursor: crosshair !important; }
+.editor.is-drawing-path .editor-stage-box { outline: 3px dashed var(--color-teal); outline-offset: 3px; }
+.editor-path-drawing { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; pointer-events: none; }
+.editor-path-drawing polyline { fill: none; stroke: var(--color-teal); stroke-linecap: round; stroke-linejoin: round; }
+/* Text styles (section 20): chips written in their own look */
+.editor-text-styles { display: flex; flex-wrap: wrap; gap: 4px; margin: 2px 0 8px; }
+.editor .text-style-chip { padding: 3px 10px; border-radius: 999px; line-height: 1.3; }
+.editor .text-style-chip.is-current { border-color: var(--color-accent); background: color-mix(in srgb, var(--color-accent) 18%, transparent); }
+.editor-styles-menu { width: auto; max-width: 280px; }
+.text-style-own { display: inline-flex; align-items: center; }
+.editor .text-style-own .text-style-chip { border-radius: 999px 0 0 999px; }
+.editor .text-style-remove { padding: 3px 7px; border-left: 0; border-radius: 0 999px 999px 0; font-size: .8rem; color: var(--color-text-muted); }
+.editor .text-style-add { padding: 3px 10px; border-radius: 999px; border-style: dashed; font-size: .8rem; color: var(--color-text-muted); }
+.text-style-naming { display: flex; gap: 4px; flex-basis: 100%; }
+.text-style-naming input { flex: 1; }
+.editor-styles-menu .editor-text-styles { display: grid; margin: 0; }
+.editor-styles-menu .text-style-chip { text-align: left; border-radius: 6px; }
+/* Morph pairing (section 20b): the next slide's elements */
+.editor-morph-menu { width: 300px; max-height: 60vh; overflow: auto; }
+.editor-morph-menu button.is-current { background: color-mix(in srgb, var(--color-accent) 18%, transparent); }
+.morph-link { margin: 2px 0; }
+.editor-motion-path { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; pointer-events: none; }
+.editor-motion-path polyline { fill: none; stroke: var(--color-teal); }
+.editor-motion-path .motion-dot { fill: #fff; stroke: var(--color-teal); stroke-width: 2; pointer-events: auto; cursor: move; vector-effect: non-scaling-stroke; }
+/* Layers tab (section 20): the slide's elements as a tree; hide while editing, lock */
+.editor-tabs { flex-wrap: wrap; flex-shrink: 0; gap: 4px; padding-inline: 10px; }   /* (never squeezed by the panel under it) */
+.editor-tabs button { padding-inline: 8px; white-space: nowrap; }
+/* a small laptop screen (v185): the settings panel narrower, the tabs on one row (they scroll sideways if they must),
+   so the slide gets more room */
+@media (max-width: 1440px) {
+  .editor:not(.right-unpinned) { --right-width: clamp(300px, 26vw, 420px); }
+  .editor-tabs button { padding-inline: 6px; }   /* (the tabs wrap to a second row when the panel is narrow: every name stays readable) */
+  .editor-title { display: none; }   /* the top bar keeps room for its buttons */
+  .editor .editor-menubar button { padding-inline: 7px; }
+  .editor-bar { gap: 8px; }
+}
+/* a narrow window: the top bar's buttons go to a second row rather than off the edge */
+.editor-bar { flex-wrap: wrap; row-gap: 6px; }
+/* messages in the editor stay over the slide area (left of the settings panel) and never cover the status bar */
+.deck.is-editing .toast { max-width: min(560px, calc(100vw - 480px)); left: calc(50% - 160px); bottom: 56px; }
+@media (max-width: 1100px) { .deck.is-editing .toast { max-width: calc(100vw - 340px); left: calc(50% - 150px); } }   /* (still left of the narrower panel) */
+.editor-layers { list-style: none; margin: 0; padding: 0; display: grid; gap: 2px; }
+.layer-row { display: grid; grid-template-columns: minmax(0, 1fr) auto auto; gap: 4px; align-items: center; padding: 2px 4px 2px calc(4px + var(--depth, 0) * 14px); border-radius: 6px; }
+.layer-row.is-selected { background: color-mix(in srgb, var(--color-accent) 16%, transparent); }
+.layer-row.is-grouped { box-shadow: inset 0 0 0 1px var(--color-accent); }
+.layer-row.is-hidden .layer-label { opacity: .5; text-decoration: line-through; }
+.editor .layer-label { text-align: left; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; border: 0; background: none; padding: 4px 6px; }
+.layer-label small { color: var(--color-text-muted); font-size: .75rem; }
+.editor .layer-toggle { padding: 2px 6px; border: 0; background: none; opacity: .35; font-size: .85rem; line-height: 1.2; }
+.editor .layer-toggle.is-on, .layer-row:hover .layer-toggle { opacity: 1; }
+.editor .layer-rename { min-width: 0; padding: 3px 6px; font: inherit; }
+.editor .layer-filter { width: 100%; box-sizing: border-box; }
+.layer-row[hidden] { display: none; }
+/* Overview (O): every slide large; drag one to move it */
+.editor-template-grid.is-overview { grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); }
+.editor-template-grid.is-overview button { text-align: left; -webkit-user-drag: element; }   /* Chrome drags a button only with this */
+.editor-template-grid.is-overview button.is-drop-after { box-shadow: 4px 0 0 var(--color-teal); }
+.editor-template-grid.is-overview button.is-selected { border-color: var(--color-accent); color: var(--color-accent); }
+.editor-template-grid.is-overview button.is-drop-before { box-shadow: -4px 0 0 var(--color-teal); }
+.editor-hover-box { position: absolute; border: 2px solid var(--color-teal); border-radius: 4px; pointer-events: none; }
+.editor-hover-box[hidden] { display: none; }
+/* on the canvas only (the presentation ignores these attributes) */
+.editor-stage [data-editor-hidden] { visibility: hidden !important; }
+.editor-stage [data-editor-locked] { pointer-events: none; }
+/* locked (Layers tab, Arrange › Lock): a dotted grey edge says so on the canvas */
+.editor-stage .scene [data-editor-locked]:not([data-editor-note]) { outline: 2px dotted color-mix(in srgb, var(--color-text-muted) 80%, transparent); outline-offset: 4px; }
+/* ▲ ▼ in the Animations tab: this one earlier or later than its neighbour */
+.anim-move { display: inline-flex; gap: 2px; }
+.anim-move button { padding: 0 5px; font-size: .7rem; line-height: 1.4; }
+.editor-selection.is-locked { outline-style: dashed; }
+.editor-rotate[data-angle]::after { content: attr(data-angle); position: absolute; left: calc(100% + var(--handle) * .6); top: 50%; translate: 0 -50%; rotate: calc(-1 * var(--outline-turn, 0deg)); padding: calc(3px / var(--editor-scale, .5)) calc(8px / var(--editor-scale, .5)); border-radius: 6px; background: var(--color-presenter-background); color: var(--color-accent); font: 600 calc(13px / var(--editor-scale, .5)) var(--font-mono); white-space: nowrap; }
+/* Grid (under the canvas, G): 40 px lines on the slide while editing; the middle lines a little stronger */
+.editor-stage.show-grid .editor-overlay {
+  background-image: linear-gradient(to right, color-mix(in srgb, var(--color-accent) 45%, transparent) 2px, transparent 2px), linear-gradient(to bottom, color-mix(in srgb, var(--color-accent) 45%, transparent) 2px, transparent 2px),
+    linear-gradient(to right, color-mix(in srgb, var(--color-text) 14%, transparent) 1px, transparent 1px), linear-gradient(to bottom, color-mix(in srgb, var(--color-text) 14%, transparent) 1px, transparent 1px);
+  background-size: 100% 100%, 100% 100%, 40px 40px, 40px 40px; background-position: 799px 0, 0 449px, 0 0, 0 0; background-repeat: no-repeat, no-repeat, repeat, repeat; }
+/* on the canvas you edit, a "fades away" or "disappears" item stays readable (thumbnails and previews show the end: faint) */
+.editor-stage.still-slide [data-reveal-step][data-reveal-effect="fade-out"]:not(.is-previewing), .editor-stage.still-slide [data-reveal-step][data-reveal-effect="leave"]:not(.is-previewing) { opacity: calc(.5 * var(--element-opacity, 1)) !important; }
+.editor-stage.still-slide .is-editor-selected[data-reveal-step][data-reveal-effect]:not(.is-previewing), .editor-stage.still-slide [data-reveal-step][data-reveal-effect]:not(.is-previewing):focus-within,
+  .editor-stage.still-slide [data-reveal-step][data-reveal-effect]:not(.is-previewing):has(.is-editor-selected) { opacity: var(--element-opacity, 1) !important; }
+.editor .editor-view-toggle[aria-pressed="true"] { color: var(--color-accent); border-color: var(--color-accent); }
+/* panning a zoomed slide: Space + drag, or the middle mouse button */
+.editor-canvas.is-pan-ready .editor-canvas-scroll, .editor-canvas.is-pan-ready .editor-canvas-scroll * { cursor: grab !important; }
+.editor-canvas.is-panning .editor-canvas-scroll, .editor-canvas.is-panning .editor-canvas-scroll * { cursor: grabbing !important; }
+
+/* ==== The animation panel (section 20d): along the bottom, under the slide ==== */
+.editor-timeline { grid-row: 3; grid-column: 2; height: var(--timeline-height, 230px); display: none; grid-template-rows: auto minmax(0, 1fr); position: relative;
+  border-top: 1px solid var(--color-line); background: var(--color-presenter-background); user-select: none; outline: none; }
+.editor.timeline-open .editor-timeline { display: grid; }
+.editor-timeline { min-width: 0; overflow: hidden; }   /* (a narrow window: it stays in its column, never under the settings panel) */
+.timeline-head { flex-wrap: wrap; row-gap: 4px; }
+.timeline-resize { position: absolute; left: 0; right: 0; top: -4px; height: 8px; cursor: ns-resize; z-index: 5; }
+.timeline-head { display: flex; align-items: center; gap: 6px; padding: 4px 8px; border-bottom: 1px solid var(--color-line); font-size: .8rem; }
+.timeline-head b { font-size: .72rem; letter-spacing: .08em; text-transform: uppercase; color: var(--color-text-muted); margin-right: 6px; }
+.editor .timeline-head button { padding: 2px 9px; font-size: .78rem; }
+.timeline-sections { display: flex; gap: 4px; flex-wrap: wrap; }
+.editor .timeline-sections button.is-current, .editor .timeline-head [data-tl="zoom-fit"].is-current { border-color: var(--color-accent); background: color-mix(in srgb, var(--color-accent) 18%, transparent); }
+.timeline-body { overflow: auto; position: relative; }
+.timeline-empty { padding: 12px 16px; }
+.tl-grid { position: relative; min-width: 100%; }
+.tl-ruler-row, .tl-row { display: grid; grid-template-columns: var(--tl-label) max-content; }
+.tl-ruler-row { position: sticky; top: 0; z-index: 4; background: var(--color-presenter-background); border-bottom: 1px solid var(--color-line); }
+.tl-label { position: sticky; left: 0; z-index: 3; display: flex; align-items: center; gap: 4px; min-width: 0; padding: 0 6px; background: var(--color-presenter-background); border-right: 1px solid var(--color-line); }
+.tl-corner { font-size: .68rem; color: var(--color-text-muted); }
+.editor .tl-name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; border: 0; background: none; padding: 2px 4px; font-size: .8rem; text-align: left; }
+.tl-row.is-selected .tl-label { background: color-mix(in srgb, var(--color-accent) 14%, var(--color-presenter-background)); }
+.tl-row.is-selected .tl-name { color: var(--color-accent); }
+.editor .tl-twist { width: 18px; padding: 0; border: 0; background: none; color: var(--color-text-muted); text-align: center; flex: none; }
+.tl-step { width: 46px; padding: 1px 4px !important; font-size: .75rem !important; }
+.tl-lane .tl-label { padding-left: 28px; }
+.tl-lane-name { font-size: .72rem; color: var(--color-text-muted); }
+.tl-ruler { position: relative; height: 22px; cursor: ew-resize; }
+.tl-ruler.is-off { cursor: default; opacity: .6; }
+.tl-ruler span { position: absolute; top: 4px; white-space: nowrap; font: .68rem var(--font-mono); color: var(--color-text-muted); padding-left: 3px; border-left: 1px solid var(--color-line); height: 14px; }
+.tl-track { position: relative; height: 28px; border-bottom: 1px solid color-mix(in srgb, var(--color-line) 50%, transparent); }
+.tl-lane .tl-track { height: 22px; }
+.tl-bar { position: absolute; top: 5px; height: 18px; box-sizing: border-box; border-radius: 5px; border: 1px solid var(--color-accent); background: color-mix(in srgb, var(--color-accent) 28%, transparent); cursor: grab; }
+.tl-bar.has-keys { background: color-mix(in srgb, var(--color-teal) 18%, transparent); border-color: var(--color-teal); }
+.tl-bar.is-loop { background-image: repeating-linear-gradient(90deg, transparent 0 8px, color-mix(in srgb, var(--color-accent) 30%, transparent) 8px 10px); }
+.tl-bar.is-fixed { cursor: default; opacity: .55; border-style: dashed; }
+.tl-bar.is-dragging { cursor: grabbing; box-shadow: 0 0 0 2px var(--color-accent); }
+.tl-handle { position: absolute; top: -1px; bottom: -1px; width: 8px; cursor: ew-resize; }
+.tl-handle.is-start { left: -4px; } .tl-handle.is-end { right: -4px; }
+.tl-handle:hover, .tl-bar.is-dragging .tl-handle { background: color-mix(in srgb, var(--color-accent) 60%, transparent); border-radius: 3px; }
+.tl-seg { position: absolute; top: 9px; height: 10px; cursor: pointer; }
+.tl-seg::after { content: ""; position: absolute; left: 0; right: 0; top: 4px; height: 2px; background: var(--color-teal); }
+.tl-seg.is-eased::after { background: var(--color-accent); }
+.tl-key { position: absolute; top: 8px; width: 11px; height: 11px; margin-left: -6px; rotate: 45deg; box-sizing: border-box; background: #fff; border: 2px solid var(--color-teal); cursor: ew-resize; z-index: 1; }
+.tl-lane .tl-key { top: 5px; }
+.tl-key.is-selected { background: var(--color-accent); border-color: var(--color-accent); }
+.tl-key.is-fixed { cursor: default; opacity: .6; }
+.tl-playhead { position: absolute; top: 0; bottom: 0; width: 2px; margin-left: -1px; background: var(--color-rose); pointer-events: none; z-index: 5; }   /* over the ruler: its time shows there */
+.tl-playhead::before { content: attr(data-time); position: absolute; top: 2px; left: 4px; padding: 0 3px; border-radius: 3px; background: var(--color-presenter-background); font: .66rem var(--font-mono); color: var(--color-rose); white-space: nowrap; }
+.tl-readout { position: absolute; z-index: 6; padding: 3px 8px; border-radius: 6px; background: var(--color-surface); border: 1px solid var(--color-line); font: .74rem var(--font-mono); pointer-events: none; white-space: nowrap; }
+.tl-select-box { position: absolute; z-index: 6; border: 1px dashed var(--color-accent); background: color-mix(in srgb, var(--color-accent) 12%, transparent); pointer-events: none; }
+.tl-lane.is-graph .tl-label { align-items: flex-start; padding-top: 6px; }
+.tl-lane-name small { display: block; font: .64rem var(--font-mono); color: var(--color-text-muted); }
+.tl-curve { position: absolute; left: 0; top: 0; overflow: visible; }
+.tl-curve polyline { fill: none; stroke: var(--color-teal); stroke-width: 2; }
+.tl-dot { position: absolute; width: 11px; height: 11px; margin: -6px 0 0 -6px; border-radius: 50%; box-sizing: border-box; background: #fff; border: 2px solid var(--color-teal); cursor: move; z-index: 1; }
+.tl-dot.is-selected { background: var(--color-accent); border-color: var(--color-accent); }
+.tl-dot.is-fixed { cursor: default; opacity: .6; }
+/* ==== The Code tab (section 20e) ==== */
+.editor textarea.editor-code { font: .8rem/1.5 var(--font-mono); white-space: pre; tab-size: 2; resize: vertical; min-height: 80px; background: color-mix(in srgb, var(--color-surface) 70%, black); }
+.editor-code-foot { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-top: 4px; }
+.editor-code-foot select { width: auto; max-width: 60%; }
+.editor-code-html { margin: 2px 0 6px; }
+.editor-code-html summary { cursor: pointer; font-size: .78rem; color: var(--color-text-muted); padding: 2px 0; }
+.editor-code-html[open] summary { color: var(--color-text); }
+[data-html-status].is-warning { color: var(--color-rose); }
+.editor-js-errors { margin: 4px 0; padding-left: 18px; font: .74rem var(--font-mono); color: var(--color-rose); }
+.editor-code-hints { position: fixed; z-index: 96; min-width: 200px; max-width: 280px; max-height: 200px; overflow: auto; padding: 4px; border-radius: 8px;
+  background: var(--color-presenter-background); border: 1px solid var(--color-line); box-shadow: 0 12px 30px rgb(0 0 0 / .45); font: .78rem var(--font-mono); }
+.editor-code-hints[hidden] { display: none; }
+.editor-code-hints div { padding: 3px 8px; border-radius: 5px; cursor: pointer; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.editor-code-hints div.is-current { background: color-mix(in srgb, var(--color-accent) 22%, transparent); }
+.anim-quick-group > .anim-mine-item { display: inline-flex; width: auto; font-size: inherit; letter-spacing: normal; text-transform: none; color: inherit; }   /* (not the row's name) */
+.editor .anim-mine-item [data-action="motion-mine"] { border-radius: 999px 0 0 999px; }
+.editor .anim-quick .anim-mine-remove { border-left: 0; border-radius: 0 999px 999px 0; padding: 3px 7px; color: var(--color-text-muted); }
+.anim-mine em { font-size: .74rem; }
+.tl-ease-menu { width: 230px; max-height: 70vh; overflow: auto; }
+.tl-ease-menu button { display: flex !important; align-items: center; gap: 8px; }
+.tl-ease-menu svg { flex: none; }
+.tl-ease-menu svg polyline { fill: none; stroke: var(--color-teal); stroke-width: 2; }
+.tl-ease-menu svg .ease-grid { stroke: var(--color-line); stroke-width: 1; }
+.editor .tl-lane-remove { margin-left: auto; padding: 0 6px; border: 0; background: none; color: var(--color-text-muted); font-size: .8rem; }
+.editor .tl-lane-remove:hover { color: var(--color-rose); }
+.tl-add-lane select { width: auto; max-width: 150px; padding: 1px 4px; font-size: .74rem; }
+.editor-stagger input { width: 80px; }
+.editor-stage .scene [data-group] { outline: 1px dashed color-mix(in srgb, var(--color-teal) 45%, transparent); outline-offset: 4px; }   /* a group shows its box (only in the editor) */
+/* ==== The text bar (section 20c): above the words selected while typing ==== */
+/* Check spelling (20c): a bar over the status bar while it walks through the texts */
+.editor-spellbar { position: fixed; z-index: 73; left: calc((var(--left-width, 236px) + 100vw - var(--right-width, 420px)) / 2); bottom: 44px; translate: -50% 0; display: flex; flex-wrap: wrap; gap: 8px; align-items: center; max-width: calc(100vw - var(--left-width, 236px) - var(--right-width, 420px) - 24px); box-sizing: border-box;
+  padding: 8px 12px; border-radius: 12px; background: var(--color-presenter-background); border: 1px solid var(--color-accent); box-shadow: 0 10px 30px rgba(0, 0, 0, .45); }
+.editor-spellbar[hidden] { display: none; }
+.editor-spellbar small { flex-basis: 100%; color: var(--color-text-muted); }
+.editor-textbar { position: fixed; z-index: 72; display: flex; gap: 2px; align-items: center; padding: 3px; border-radius: 10px;
+  background: var(--color-presenter-background); border: 1px solid var(--color-line); box-shadow: 0 10px 26px rgb(0 0 0 / .45); }
+.editor-textbar[hidden] { display: none; }
+.editor-textbar { flex-wrap: wrap; box-sizing: border-box; }
+/* a menu open: a message waits under it (it would cover the menu's last rows) */
+.deck:has(.editor-menu:not([hidden])) > .toast { visibility: hidden; }
+.editor .editor-textbar button { border: 0; background: none; padding: 4px 9px; font-size: .82rem; border-radius: 6px; }
+.editor .editor-textbar button:hover { background: color-mix(in srgb, var(--color-accent) 18%, transparent); }
+.editor-textbar .is-bold { font-weight: 800; } .editor-textbar .is-italic { font-style: italic; font-family: Georgia, serif; }
+.editor .editor-textbar-link { width: 220px; padding: 3px 8px; font-size: .8rem; }
+.editor-textbar .is-strike { text-decoration: line-through; }
+.editor-textbar .is-underline { text-decoration: underline; }
+.editor-textbar-colours { display: flex; gap: 3px; padding: 0 4px; border-left: 1px solid var(--color-line); }
+.editor-textbar-colours[hidden] { display: none; }
+.editor .editor-textbar-colours button { width: 20px; height: 20px; padding: 0; border-radius: 50%; background: var(--swatch); border: 2px solid var(--color-line); font-size: .7rem; line-height: 1; color: var(--color-presenter-background); }
+.editor .editor-textbar-colours button:hover { background: var(--swatch); outline: 2px solid var(--color-accent); }
+.editor .editor-add-property { margin: 6px 0 2px; font-size: .78rem; }
+/* notes for the editor (Element tab): a dashed violet outline on the canvas; listed in the Slide tab */
+.editor-stage .scene [data-editor-note] { outline: 2px dashed color-mix(in srgb, var(--color-violet) 75%, transparent); outline-offset: 5px; }
+.editor-author-notes { display: grid; gap: 4px; }
+.editor .editor-author-notes button { text-align: left; font-size: .8rem; padding: 6px 8px; border-left: 3px solid var(--color-violet); }
+/* ✓ Check the presentation (Presentation panel): one button per loose end */
+.editor-check-list { display: grid; gap: 4px; }
+.editor .editor-check-list button { text-align: left; font-size: .8rem; padding: 6px 8px; border-left: 3px solid var(--color-accent); }
+/* Style: the colours this presentation already uses */
+.editor-swatches { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+.editor-swatches .editor-note { flex-basis: 100%; margin: 0; }
+.editor .editor-swatches button { width: 24px; height: 24px; padding: 0; border-radius: 50%; background: var(--swatch); border: 2px solid var(--color-line); }
+.editor .editor-swatches button:hover { transform: scale(1.15); }
+/* your own guides (┃ ━ under the canvas): a thin teal line, easy to grab (a wider invisible edge) */
+.editor-user-guide { position: absolute; pointer-events: auto; background: var(--color-teal); opacity: .75; }
+.editor-user-guide.is-x { top: 0; bottom: 0; width: calc(1.5px / var(--editor-scale, 1)); cursor: ew-resize; }
+.editor-user-guide.is-y { left: 0; right: 0; height: calc(1.5px / var(--editor-scale, 1)); cursor: ns-resize; }
+.editor-user-guide::before { content: ""; position: absolute; inset: calc(-5px / var(--editor-scale, 1)); }
+.editor-user-guide:hover { opacity: 1; }
+.editor-user-guide.is-leaving { opacity: .3; background: var(--color-rose); }
+.editor-stage.is-playing-preview .editor-user-guide { display: none; }
+/* the box drawn from an empty spot to select what lies in it */
+.editor-marquee { position: absolute; border: calc(1.5px / var(--editor-scale, .5)) dashed var(--color-accent); background: color-mix(in srgb, var(--color-accent) 10%, transparent); pointer-events: none; }
+/* Copy to other slides: a list of the slides to tick */
+.editor-copy-to { display: grid; gap: 2px; max-height: 240px; overflow: auto; padding-right: 4px; }
+/* ▶ Play: Zoom in on this click (section 6, zoomOnStep on the canvas) */
+.editor-stage.is-playing-preview { overflow: clip; }
+.editor-stage.is-playing-preview > .scene { scale: var(--step-zoom, 1); translate: var(--step-zoom-shift, 0px 0px); transform-origin: 50% 50%; transition: scale .9s cubic-bezier(.65, 0, .35, 1), translate .9s cubic-bezier(.65, 0, .35, 1); }
+/* Icon: the symbols to pick from */
+.editor .editor-icons button { font-size: 1.2rem; padding: 4px 6px; min-width: 2.2em; }
+/* Skip this slide (Slide tab, data-skip): faint in the slide list, Next and Back pass over it */
+.editor-slide-list .is-skipped .editor-thumb { opacity: .4; }
+/* picked with Ctrl/Shift+click (several slides): a teal edge */
+.editor-slide-list .is-picked .editor-thumb { outline: 3px solid var(--color-teal); outline-offset: 2px; }
+
+/* The transition picker (Slide tab): one tile per transition, an old slide A and a new slide B. With the pointer on a
+   tile (or the keyboard's focus) it plays that transition over and over: B comes in from --from-* (tile-in), A goes
+   to --to-* (tile-out). Each kind only sets these variables. */
+.transition-tiles { display: grid; grid-template-columns: repeat(auto-fill, minmax(72px, 1fr)); gap: 6px; }
+.editor .transition-tile { display: grid; gap: 4px; padding: 5px; justify-items: stretch; text-align: center; font-size: .72rem; line-height: 1.15; }
+.editor .transition-tile[aria-pressed="true"] { outline: 2px solid var(--color-accent); outline-offset: 1px; }
+.tile-demo { position: relative; display: block; aspect-ratio: 16 / 9; overflow: hidden; border-radius: 4px; perspective: 160px; background: #0b0f14; }
+.tile-demo i { position: absolute; inset: 0; display: grid; place-items: center; font-style: normal; font-weight: 800; font-size: .95rem; backface-visibility: hidden; }
+.tile-old { background: #3a4452; color: #d7dde5; }
+.tile-new { background: var(--color-accent); color: #1a1205; }
+.tile-name { white-space: normal; overflow-wrap: anywhere; }   /* (a long name takes two lines, never cut) */
+/* still, each tile shows its transition paused halfway (so they look different at a glance); pointer or focus: it plays */
+.transition-tile .tile-new { animation: tile-in 1.8s var(--ease-in-out, ease-in-out) -.77s infinite paused; }
+.transition-tile .tile-old { animation: tile-out 1.8s var(--ease-in-out, ease-in-out) -.77s infinite paused; z-index: var(--old-z, 0); }
+.transition-tile:is(:hover, :focus-visible) :is(.tile-new, .tile-old) { animation-play-state: running; animation-delay: 0s; }
+@keyframes tile-in {
+  0%, 18% { transform: var(--from-t, none); opacity: var(--from-o, 1); clip-path: var(--from-c, inset(0)); filter: var(--from-f, none); }
+  68%, 100% { transform: none; opacity: 1; clip-path: var(--end-c, inset(0)); filter: none; }
+}
+@keyframes tile-out {
+  0%, 18% { transform: none; opacity: 1; }
+  68%, 100% { transform: var(--to-t, none); opacity: var(--to-o, 1); }
+}
+.transition-tile[data-kind="slide"] { --from-t: translateX(100%); --to-t: translateX(-35%); --to-o: 0; }
+.transition-tile[data-kind="fade"] { --from-o: 0; }
+.transition-tile[data-kind="zoom"] { --from-t: scale(.55); --from-o: 0; }
+.transition-tile[data-kind="rise"] { --from-t: translateY(70%); --from-o: 0; }
+.transition-tile[data-kind="blur"] { --from-f: blur(5px); --from-o: 0; }
+.transition-tile[data-kind="flip"] { --from-t: rotateY(-90deg); --to-t: rotateY(90deg); }
+.transition-tile[data-kind="push"] { --from-t: translateX(100%); --to-t: translateX(-100%); }
+.transition-tile[data-kind="cover"] { --from-t: translateX(100%); }
+.transition-tile[data-kind="uncover"] { --to-t: translateX(-100%); --old-z: 2; }
+.transition-tile[data-kind="wipe"] { --from-c: inset(0 100% 0 0); }
+.transition-tile[data-kind="circle"] { --from-c: circle(0% at 50% 50%); --end-c: circle(75% at 50% 50%); }
+.transition-tile[data-kind="split"] { --from-c: inset(0 50%); }
+.transition-tile[data-kind="cube"] { --from-t: translateX(50%) rotateY(90deg) translateX(50%); --to-t: translateX(-50%) rotateY(-90deg) translateX(-50%); }
+.transition-tile[data-kind="none"] .tile-new { animation-timing-function: steps(1, jump-end); }
+.transition-tile[data-kind="none"] { --from-o: 0; }
+
+/* ---- v216: a calmer panel ---- */
+/* the tabs: one row of words, the open one underlined */
+.editor .editor-tabs { gap: 0; padding: 0 8px; }
+.editor .editor-tabs button { border: 0; border-bottom: 2px solid transparent; border-radius: 0; background: none; padding: 9px 7px 7px; font-size: .84rem; color: var(--color-text-muted); }
+.editor .editor-tabs button:hover:not(:disabled) { color: var(--color-text); border-bottom-color: color-mix(in srgb, var(--color-accent) 45%, transparent); }
+.editor .editor-tabs button.is-selected { color: var(--color-accent); border-bottom-color: var(--color-accent); }
+/* Tips (the panel's head): the explanations show only when it is on */
+.editor-dock-tools { display: inline-flex; align-items: center; gap: 4px; }
+.editor .editor-tips-toggle { border: 0; background: none; padding: 1px 9px; font-size: .74rem; letter-spacing: .04em; text-transform: none; color: var(--color-text-muted); border-radius: 999px; }
+.editor .editor-tips-toggle::before { content: "ⓘ "; }
+.editor.show-tips .editor-tips-toggle { color: var(--color-accent); background: color-mix(in srgb, var(--color-accent) 16%, transparent); }
+.editor:not(.show-tips) .editor-panel-body :is(.editor-note.is-tip, .editor-field > small) { display: none; }
+.editor:not(.show-tips) .editor-panel-body .editor-field:has(> small) > span::after { content: " ⓘ"; color: var(--color-text-muted); font-size: .85em; }
+.editor-panel-body h4 { margin-top: 14px; }
+/* Animations tab: one line per element (name · what it does · ▲▼ · its number), its timing a thin bar under it */
+.anim-transport button { padding: 4px 9px; }
+.editor .anim-row { grid-template-columns: minmax(0, 1fr) auto auto auto; gap: 3px 6px; padding: 4px 6px 5px; }
+.editor .anim-row > .anim-label { grid-column: 1; grid-row: 1; border: 0; background: none; padding: 1px 0; font-size: .86rem; }
+.editor .anim-row > .anim-label:hover { color: var(--color-accent); }
+.editor .anim-row:not(:has(> .anim-move)) > .anim-label { grid-column: 1 / 3; }
+.editor .anim-row > .anim-action { grid-column: 2; grid-row: 1; max-width: 10em; font-size: .74rem; }
+.editor .anim-row > .anim-move { grid-column: 3; grid-row: 1; opacity: .45; }
+.editor .anim-row:is(:hover, :focus-within, .is-selected) > .anim-move { opacity: 1; }
+.editor .anim-row > :is(.anim-num, span:empty) { grid-column: 4; grid-row: 1; }
+.editor .anim-row > .anim-track { grid-row: 2; }
+.editor .anim-num small { display: none; }   /* (the field's tooltip says order / click) */
+.editor .anim-num input { width: 3.4em; padding: 1px 4px; font-size: .8rem; }
+.editor .anim-track { height: 4px; }
+.editor .anim-track.is-draggable { height: 6px; }
+.editor .anim-move button { background: none; }
+.anim-pace > summary { margin-top: 6px; cursor: pointer; font-family: var(--font-mono); font-size: .78rem; letter-spacing: .12em; text-transform: uppercase; color: var(--color-teal); }
+.anim-pace[open] > summary { margin-bottom: 10px; }
+.editor .anim-row > .anim-action { opacity: .8; }
+/* a narrow panel: the names get the room (what each does is in the name's tooltip) */
+@media (max-width: 1099px) {
+  .editor .anim-row > .anim-action { display: none; }
+  .editor .anim-row > .anim-label { grid-column: 1 / 3; }
+  .editor .editor-tabs button { padding-inline: 5px; font-size: .8rem; }
+}

@@ -1,0 +1,126 @@
+/* ===========================================================================
+   4. SLIDE TRANSITIONS
+   One slide (.scene) is active at a time. Next: the old slide leaves to the
+   left and the new one arrives from the right. Back mirrors that.
+   =========================================================================== */
+.scene {
+  position: absolute; inset: 0; overflow: hidden;
+  display: grid; align-content: safe center; justify-items: center;
+  padding: 64px 64px 84px;
+  opacity: 0; visibility: hidden;
+  transition: opacity var(--scene-out, var(--duration-fast)) var(--ease-in), transform var(--scene-out, var(--duration-fast)) var(--ease-in), visibility 0s linear var(--scene-out, var(--duration-fast));
+}
+.scene:not(.is-active):not(.is-leaving) { transition: none; }   /* waiting slides jump to their start side at once */
+.stage[data-direction="forward"] .scene:not(.is-active):not(.is-leaving) { transform: translateX(48px); }
+.stage[data-direction="backward"] .scene:not(.is-active):not(.is-leaving) { transform: translateX(-48px); }
+.stage[data-direction="forward"] .scene.is-leaving { transform: translateX(-48px); }
+.stage[data-direction="backward"] .scene.is-leaving { transform: translateX(48px); }
+.scene.is-active { opacity: 1; visibility: visible; transform: none; transition: opacity var(--scene-in-fade, .4s) var(--ease-out) .2s, transform var(--scene-in-move, .5s) var(--ease-out) .2s, scale .35s var(--ease-out), transform-origin .12s linear; }
+/* zoom (Z key): the slide on screen is magnified around the mouse; the script sets these variables on the stage.
+   (The scale and transform-origin transitions in .scene.is-active above are for this zoom.) */
+.stage .scene.is-active { scale: calc(var(--zoom-level, 1) * var(--step-zoom, 1)); translate: var(--step-zoom-shift, 0px 0px); transform-origin: var(--zoom-x, 50%) var(--zoom-y, 50%); }
+/* Zoom in on this click (data-zoom-in on a click item, section 6): the script sets --step-zoom and --step-zoom-shift on the
+   stage, and data-step-zoomed until it has zoomed out again: the slide is magnified around its middle and moved so the item
+   comes to the middle; scale and shift glide (from one item to the next too). A slide with no transition: at once.
+   (.is-active twice: it wins over a transition's own list, e.g. blur's, which comes later) */
+.stage[data-step-zoomed] .scene.is-active.is-active { transform-origin: 50% 50%; transition: opacity var(--scene-in-fade, .4s) var(--ease-out) .2s, transform var(--scene-in-move, .5s) var(--ease-out) .2s, filter var(--scene-in-move, .5s) var(--ease-out) .2s, scale .9s cubic-bezier(.65, 0, .35, 1), translate .9s cubic-bezier(.65, 0, .35, 1); }
+.stage[data-transition="none"][data-step-zoomed] .scene.is-active.is-active { transition: none; }
+.stage[data-step-zoomed] { overflow: clip; }
+.stage.is-zoomed { overflow: clip; }   /* the magnified slide stays inside the 1600 x 900 stage */
+
+/* transition speed per slide (editor, Slide tab: data-transition-speed; the slide that comes on decides, as for the kind) */
+.stage[data-transition-speed="fast"] { --scene-in-fade: .15s; --scene-in-move: .2s; --scene-out: .12s; --scene-push: .3s; }   /* (only the slide's own coming and going: */
+.stage[data-transition-speed="slow"] { --scene-in-fade: .9s; --scene-in-move: 1.1s; --scene-out: .55s; --scene-push: 1.1s; }   /*  the zooms and a morph keep their timing) */
+
+/* transition per slide: data-transition="fade", "zoom", "rise", "blur", "flip", "push", "cover", "uncover", "wipe", "circle", "split", "cube" or "none" on a <section> (default: the slide described above).
+   The slide that comes on decides; the script copies its value to the stage as data-transition. */
+.stage[data-transition="fade"] .scene:not(.is-active):not(.is-leaving), .stage[data-transition="fade"] .scene.is-leaving { transform: none; }
+.stage[data-transition="zoom"] .scene:not(.is-active):not(.is-leaving) { transform: scale(.92); }
+.stage[data-transition="zoom"] .scene.is-leaving { transform: scale(1.06); }
+.stage[data-transition="none"] .scene { transition: none; }
+/* rise: in from below, out upwards · blur: in and out of focus · flip: a slight turn, like a page (editor, Slide tab) */
+.stage[data-transition="rise"] .scene:not(.is-active):not(.is-leaving) { transform: translateY(60px); }
+.stage[data-transition="rise"] .scene.is-leaving { transform: translateY(-40px); }
+.stage[data-transition="blur"] .scene:not(.is-active):not(.is-leaving), .stage[data-transition="blur"] .scene.is-leaving { transform: none; filter: blur(18px); }
+.stage[data-transition="blur"] .scene.is-leaving { transition: opacity var(--scene-out, var(--duration-fast)) var(--ease-in), filter var(--scene-out, var(--duration-fast)) var(--ease-in), visibility 0s linear var(--scene-out, var(--duration-fast)); }
+.stage[data-transition="blur"] .scene.is-active { transition: opacity var(--scene-in-fade, .4s) var(--ease-out) .2s, filter var(--scene-in-move, .5s) var(--ease-out) .2s, scale .35s var(--ease-out), transform-origin .12s linear; }
+.stage[data-transition="flip"] .scene:not(.is-active):not(.is-leaving) { transform: perspective(1800px) rotateY(-16deg) scale(.95); }
+.stage[data-transition="flip"] .scene.is-leaving { transform: perspective(1800px) rotateY(16deg) scale(.95); }
+/* push: the new slide comes in from the side and pushes the old one out (both whole, no fade; Back: the other way) */
+.stage[data-transition="push"] { overflow: clip; }
+.stage[data-transition="push"] .scene { opacity: 1; }
+.stage[data-transition="push"][data-direction="forward"] .scene:not(.is-active):not(.is-leaving), .stage[data-transition="push"][data-direction="backward"] .scene.is-leaving { transform: translateX(100%); }
+.stage[data-transition="push"][data-direction="backward"] .scene:not(.is-active):not(.is-leaving), .stage[data-transition="push"][data-direction="forward"] .scene.is-leaving { transform: translateX(-100%); }
+.stage[data-transition="push"] .scene.is-active { transition: transform var(--scene-push, .6s) cubic-bezier(.65, 0, .35, 1), scale .35s var(--ease-out), transform-origin .12s linear; }
+.stage[data-transition="push"] .scene.is-leaving { transition: transform var(--scene-push, .6s) cubic-bezier(.65, 0, .35, 1), visibility 0s linear var(--scene-push, .6s); }
+/* cover: the new slide slides in over the old one, which stays where it is underneath (Back: from the other side) */
+.stage[data-transition="cover"] { overflow: clip; }
+.stage[data-transition="cover"] .scene { opacity: 1; }
+.stage[data-transition="cover"][data-direction="forward"] .scene:not(.is-active):not(.is-leaving) { transform: translateX(100%); }
+.stage[data-transition="cover"][data-direction="backward"] .scene:not(.is-active):not(.is-leaving) { transform: translateX(-100%); }
+.stage[data-transition="cover"] .scene.is-leaving { transform: none; z-index: 1; transition: clip-path var(--scene-push, .6s) cubic-bezier(.65, 0, .35, 1), visibility 0s linear var(--scene-push, .6s); }
+.stage[data-transition="cover"][data-direction="forward"] .scene.is-leaving { clip-path: inset(0 100% 0 0); }   /* (the old slide gives way where the new one comes: no two slides over each other) */
+.stage[data-transition="cover"][data-direction="backward"] .scene.is-leaving { clip-path: inset(0 0 0 100%); }
+.stage[data-transition="cover"] .scene.is-active { z-index: 2; box-shadow: 0 0 60px rgb(0 0 0 / .45); transition: transform var(--scene-push, .6s) cubic-bezier(.65, 0, .35, 1), scale .35s var(--ease-out), transform-origin .12s linear; }
+/* uncover: the old slide slides away and shows the new one underneath, which is revealed in step with its edge (Back: the other way) */
+.stage[data-transition="uncover"] { overflow: clip; }
+.stage[data-transition="uncover"] .scene { opacity: 1; }
+.stage[data-transition="uncover"][data-direction="forward"] .scene:not(.is-active):not(.is-leaving) { transform: none; clip-path: inset(0 0 0 100%); }
+.stage[data-transition="uncover"][data-direction="backward"] .scene:not(.is-active):not(.is-leaving) { transform: none; clip-path: inset(0 100% 0 0); }
+.stage[data-transition="uncover"] .scene.is-active { z-index: 1; clip-path: inset(0 0 0 0); transition: clip-path var(--scene-push, .6s) cubic-bezier(.65, 0, .35, 1), scale .35s var(--ease-out), transform-origin .12s linear; }
+.stage[data-transition="uncover"][data-direction="forward"] .scene.is-leaving { transform: translateX(-100%); }
+.stage[data-transition="uncover"][data-direction="backward"] .scene.is-leaving { transform: translateX(100%); }
+.stage[data-transition="uncover"] .scene.is-leaving { z-index: 2; box-shadow: 0 0 60px rgb(0 0 0 / .45); transition: transform var(--scene-push, .6s) cubic-bezier(.65, 0, .35, 1), visibility 0s linear var(--scene-push, .6s); }
+.stage[data-transition="push"][data-step-zoomed] .scene.is-active.is-active { transition: transform var(--scene-push, .6s) cubic-bezier(.65, 0, .35, 1), scale .9s cubic-bezier(.65, 0, .35, 1), translate .9s cubic-bezier(.65, 0, .35, 1); }   /* (Back onto a slide zoomed in on its click) */
+/* wipe: the new slide is drawn open over the old one, from left to right (Back: from right to left) · circle: it opens as a circle
+   from the middle; the old slide stays still underneath and gives way in step where the new one has opened (a slide has no
+   background of its own: both would show there), cut by a matching clip (wipe) or a growing hole in a mask (circle; 106% of the
+   farthest corner = 75% of the circle's clip measure, so the edges meet) */
+@property --scene-hole { syntax: '<percentage>'; inherits: false; initial-value: 0%; }
+.stage:is([data-transition="wipe"], [data-transition="circle"], [data-transition="split"]) { overflow: clip; }
+.stage:is([data-transition="wipe"], [data-transition="circle"], [data-transition="split"]) .scene { opacity: 1; }
+.stage[data-transition="wipe"][data-direction="forward"] .scene:not(.is-active):not(.is-leaving) { transform: none; clip-path: inset(0 100% 0 0); }
+.stage[data-transition="wipe"][data-direction="backward"] .scene:not(.is-active):not(.is-leaving) { transform: none; clip-path: inset(0 0 0 100%); }
+.stage[data-transition="wipe"] .scene.is-active { clip-path: inset(0 0 0 0); }
+.stage[data-transition="circle"] .scene:not(.is-active):not(.is-leaving) { transform: none; clip-path: circle(0% at 50% 50%); }
+.stage[data-transition="circle"] .scene.is-active { clip-path: circle(75% at 50% 50%); }   /* (75%: past the corners) */
+.stage:is([data-transition="wipe"], [data-transition="circle"], [data-transition="split"]) .scene.is-active { z-index: 2; transition: clip-path var(--scene-push, .6s) cubic-bezier(.65, 0, .35, 1), scale .35s var(--ease-out), transform-origin .12s linear; }
+.stage:is([data-transition="wipe"], [data-transition="circle"], [data-transition="split"]) .scene.is-leaving { transform: none; z-index: 1;
+  transition: clip-path var(--scene-push, .6s) cubic-bezier(.65, 0, .35, 1), --scene-hole var(--scene-push, .6s) cubic-bezier(.65, 0, .35, 1), visibility 0s linear var(--scene-push, .6s); }
+.stage[data-transition="wipe"][data-direction="forward"] .scene.is-leaving { clip-path: inset(0 0 0 100%); }
+.stage[data-transition="wipe"][data-direction="backward"] .scene.is-leaving { clip-path: inset(0 100% 0 0); }
+.stage[data-transition="circle"] .scene.is-leaving { --scene-hole: 106%; mask-image: radial-gradient(circle farthest-corner at 50% 50%, transparent var(--scene-hole), #000 var(--scene-hole)); }
+/* split: the new slide opens from a line down the middle to both sides; the old one gives way in step (a hole in its mask,
+   --scene-hole as half its width) */
+.stage[data-transition="split"] .scene:not(.is-active):not(.is-leaving) { transform: none; clip-path: inset(0 50% 0 50%); }
+.stage[data-transition="split"] .scene.is-active { clip-path: inset(0 0 0 0); }
+.stage[data-transition="split"] .scene.is-leaving { --scene-hole: 50%; mask-image: linear-gradient(to right, #000 calc(50% - var(--scene-hole)), transparent calc(50% - var(--scene-hole)) calc(50% + var(--scene-hole)), #000 calc(50% + var(--scene-hole))); }
+/* cube: the two slides are sides of a cube that turns around its middle (Back: the other way): each slide moves to the
+   cube's centre (half a slide back), turns, and moves out again, so only the angle changes and the two edges stay together;
+   its back is never seen; it turns around the slide's middle (not where the pointer zoom last was) */
+.stage[data-transition="cube"] { overflow: clip; perspective: 2600px; }
+.stage[data-transition="cube"] .scene { opacity: 1; backface-visibility: hidden; }
+.stage[data-transition="cube"]:not(.is-zoomed) .scene { transform-origin: 50% 50%; }
+.stage[data-transition="cube"][data-direction="forward"] .scene:not(.is-active):not(.is-leaving), .stage[data-transition="cube"][data-direction="backward"] .scene.is-leaving { transform: translateZ(-800px) rotateY(90deg) translateZ(800px); }
+.stage[data-transition="cube"][data-direction="backward"] .scene:not(.is-active):not(.is-leaving), .stage[data-transition="cube"][data-direction="forward"] .scene.is-leaving { transform: translateZ(-800px) rotateY(-90deg) translateZ(800px); }
+.stage[data-transition="cube"] .scene.is-active { transform: translateZ(-800px) rotateY(0deg) translateZ(800px); transition: transform var(--scene-push, .6s) cubic-bezier(.65, 0, .35, 1), scale .35s var(--ease-out), transform-origin .12s linear; }
+.stage[data-transition="cube"] .scene.is-leaving { transition: transform var(--scene-push, .6s) cubic-bezier(.65, 0, .35, 1), visibility 0s linear var(--scene-push, .6s); }
+
+/* morph (data-morph, script section 7): while elements glide, both slides cross-fade without sliding,
+   the new slide shows at once, and the gliding element skips its own entrance animation */
+.stage.is-morphing .scene.is-leaving, .stage.is-morphing .scene.is-active { transform: none; }
+.stage.is-morphing .scene.is-active { transition: opacity .3s var(--ease-out), scale .35s var(--ease-out); }
+.stage:is([data-transition="push"], [data-transition="cover"], [data-transition="uncover"], [data-transition="wipe"], [data-transition="circle"], [data-transition="split"], [data-transition="cube"]).is-morphing .scene.is-leaving { transform: none; clip-path: none; mask-image: none; opacity: 0; transition: opacity var(--scene-out, var(--duration-fast)) var(--ease-in), visibility 0s linear var(--scene-out, var(--duration-fast)); }   /* (a morph between push slides: its cross-fade) */
+.scene .is-morph-target, .scene .is-morphed { animation: none !important; opacity: var(--element-opacity, 1) !important; }   /* is-morphed: until the next visit */
+/* what is inside a gliding block glides with it: no entrance of its own again (its click items still wait for their click) */
+.scene :is(.is-morph-target, .is-morphed) :is(.reveal, .split-part):not([data-reveal-step], [data-reveal-step] *) { animation: none !important; opacity: var(--element-opacity, 1) !important; }
+.scene .is-morph-source { opacity: 0 !important; transition: none !important; }
+
+/* the content column of a slide */
+.content { width: 1280px; display: grid; gap: 40px; min-width: 0; }
+.content.wide { width: 1472px; }
+
+/* elements with class "reveal" rise in one after another (order set with --order).
+   "is-visible" stays on while a slide fades out, so nothing snaps back during the fade */
+.scene.is-visible .reveal { animation: rise-in var(--duration-slow) var(--ease-out) both; animation-delay: calc(var(--order, 0) * var(--reveal-stagger) + var(--scene-enter-delay)); }
+

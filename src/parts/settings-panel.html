@@ -1,0 +1,98 @@
+  <!-- ==================== SETTINGS PANEL (filled by the script, see settingsPanel) ====================
+       The texts come from src/interface-texts.json: data-ui="key" sets the text of an element,
+       data-ui-placeholder / data-ui-aria-label set those attributes. -->
+  <div class="settings-panel" id="settingsPanel" hidden>
+    <div class="settings-card" role="dialog" aria-modal="true" aria-labelledby="settingsTitle">
+      <div class="settings-header"><h2 id="settingsTitle" data-ui="settings.title"></h2><button id="btnCloseSettings" data-ui="settings.close"></button></div>
+      <section>
+        <p class="settings-note settings-source" id="settingsSource"></p>
+        <h3 data-ui="settings.themeHeading"></h3>
+        <p class="settings-note" data-ui="settings.themeNote"></p>
+        <div class="settings-actions">
+          <label class="theme-choice"><span data-ui="settings.themeLabel"></span> <select id="themeSelect"></select></label>
+          <button id="btnDeleteTheme" data-ui="settings.deleteTheme"></button>
+        </div>
+        <div class="color-grid" id="colorPickers"></div>
+        <div class="settings-actions">
+          <input class="text-field" id="themeName" maxlength="40" data-ui-placeholder="settings.themeNamePlaceholder" data-ui-aria-label="settings.themeNamePlaceholder">
+          <button id="btnSaveTheme" data-ui="settings.saveTheme"></button>
+          <button id="btnResetColors" data-ui="settings.resetColours"></button>
+        </div>
+      </section>
+      <section>
+        <h3 data-ui="settings.timesHeading"></h3>
+        <p class="settings-note" data-ui="settings.timesNote"></p>
+        <div class="estimate-list" id="estimateInputs"></div>
+        <div class="settings-actions">
+          <button id="btnResetEstimates" data-ui="settings.resetTimes"></button>
+          <button id="btnUseRealizedTimes" data-ui="settings.useRealizedTimes"></button>
+          <span class="estimate-total" id="estimateTotal"></span>
+        </div>
+      </section>
+      <section>
+        <h3 data-ui="settings.exportHeading"></h3>
+        <p class="settings-note" id="realizedNote"></p>
+        <div class="settings-actions">
+          <button id="btnExportPlan" data-ui="settings.exportPlan"></button>
+          <button id="btnExportReportCsv" data-ui="settings.exportReportCsv"></button>
+          <button id="btnExportReportJson" data-ui="settings.exportReportJson"></button>
+          <button id="btnExportTheme" data-ui="settings.exportTheme"></button>
+          <button id="btnImport" data-ui="settings.import"></button>
+          <input type="file" id="importFile" accept=".json,application/json" hidden>
+        </div>
+        <p class="settings-note" data-ui="settings.importNote"></p>
+      </section>
+      <section>
+        <h3 data-ui="settings.textsHeading"></h3>
+        <p class="settings-note" data-ui="settings.textsNote"></p>
+        <div class="settings-actions">
+          <button id="btnExportTexts" data-ui="settings.exportTexts"></button>
+          <button id="btnResetTexts" data-ui="settings.resetTexts"></button>
+        </div>
+      </section>
+      <section>
+        <h3 data-ui="settings.spotlightHeading"></h3>
+        <p class="settings-note" data-ui="settings.spotlightNote"></p>
+        <div class="settings-actions">
+          <label class="range-field"><span data-ui="settings.spotlightSize"></span> <input type="range" id="spotlightSize" min="8" max="50" step="1"><output id="spotlightSizeValue"></output></label>
+          <label class="range-field"><span data-ui="settings.spotlightDim"></span> <input type="range" id="spotlightDim" min="0" max="95" step="1"><output id="spotlightDimValue"></output></label>
+        </div>
+        <label class="check-field"><input type="checkbox" id="spotlightFollow"><span data-ui="settings.spotlightFollow"></span></label>
+        <div class="settings-actions"><button id="btnResetSpotlight" data-ui="settings.resetSpotlight"></button></div>
+      </section>
+      <section>
+        <h3 data-ui="settings.boothHeading"></h3>
+        <p class="settings-note" data-ui="settings.boothNote"></p>
+        <div class="settings-actions">
+          <label class="range-field"><span data-ui="settings.boothSeconds"></span> <input class="text-field number-field" type="number" id="boothSeconds" min="5" max="300" step="1"></label>
+          <button id="btnStartBooth" data-ui="settings.startBooth"></button>
+        </div>
+      </section>
+      <section>
+        <h3 data-ui="settings.captionsHeading"></h3>
+        <p class="settings-note" data-ui="settings.captionsNote"></p>
+        <div class="settings-actions">
+          <label class="check-field captions-switch"><input type="checkbox" id="captionsOn"><span data-ui="settings.captionsOn"></span></label>
+          <label class="theme-choice"><span data-ui="settings.captionsLanguage"></span> <select id="captionsLanguage"></select></label>
+        </div>
+        <p class="settings-note" id="captionsUnsupported" data-ui="settings.captionsUnsupported" hidden></p>
+      </section>
+      <section>
+        <h3 data-ui="settings.printHeading"></h3>
+        <p class="settings-note" data-ui="settings.printNote"></p>
+        <div class="settings-actions">
+          <button id="btnPrintSlides" data-ui="settings.printSlides"></button>
+          <button id="btnPrintHandout" data-ui="settings.printHandout"></button>
+        </div>
+      </section>
+      <section>
+        <h3 data-ui="settings.fileHeading"></h3>
+        <p class="settings-note" data-ui="settings.fileNote"></p>
+        <div class="settings-actions">
+          <button id="btnSaveCopy" data-ui="settings.saveCopy"></button>
+          <button id="btnShowTemplates" data-ui="settings.showTemplates"></button>
+        </div>
+        <p class="settings-note" id="saveCopyEmbeddedNote" data-ui="settings.saveCopyEmbedded" hidden></p>
+      </section>
+    </div>
+  </div>

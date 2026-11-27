@@ -1,0 +1,44 @@
+/* ===========================================================================
+   6. SHARED ANIMATIONS
+   =========================================================================== */
+@keyframes rise-in { from { opacity: 0; transform: translateY(28px); } to { opacity: var(--element-opacity, 1); transform: none; } }
+/* text by word or letter (data-split, section 7): the parts rise in one after another, --split-stagger apart */
+@keyframes split-rise { from { opacity: 0; transform: translateY(.45em); } to { opacity: 1; transform: none; } }
+.split-word { display: inline-block; white-space: nowrap; }
+.split-part { display: inline-block; }
+[data-split="letter"] { --split-stagger: 25ms; } [data-split="line"] { --split-stagger: 180ms; }   /* their usual time apart (a style attribute wins; word by word: 60ms) */
+.scene.is-visible .reveal[data-split] { animation: none; }   /* its parts rise in instead */
+.scene.is-visible .reveal[data-split] .split-part { animation: split-rise var(--duration-slow) var(--ease-out) both; animation-delay: calc(var(--order, 0) * var(--reveal-stagger) + var(--scene-enter-delay) + var(--i) * var(--split-stagger, 60ms)); }
+.scene [data-reveal-step][data-split]:not([data-animation], [data-reveal-effect]):not(.is-revealed) { opacity: var(--element-opacity, 1) !important; transform: none !important; filter: var(--image-look, ) var(--element-shadow, ) !important; }   /* on a click: the parts, not the whole */
+.scene [data-reveal-step][data-split]:not([data-animation], [data-reveal-effect]):not(.is-revealed) .split-part { opacity: 0; }
+.scene [data-reveal-step][data-split]:not([data-animation], [data-reveal-effect]).is-revealed .split-part { animation: split-rise var(--duration-medium) var(--ease-out) both; animation-delay: calc(var(--i) * var(--split-stagger, 60ms)); }
+.still-slide [data-split] .split-part { opacity: 1 !important; animation: none !important; }
+/* how each part comes in (data-split-effect; none: it rises): fade, pop, drop, or type (appears at once, as typed) */
+@keyframes split-fade { from { opacity: 0; } to { opacity: 1; } }
+@keyframes split-pop { 0% { opacity: 0; transform: scale(.3); } 60% { opacity: 1; transform: scale(1.15); } 100% { opacity: 1; transform: none; } }
+@keyframes split-drop { from { opacity: 0; transform: translateY(-.8em); } to { opacity: 1; transform: none; } }
+.scene.is-visible .reveal[data-split][data-split-effect="fade"] .split-part, .scene [data-reveal-step][data-split][data-split-effect="fade"]:not([data-animation], [data-reveal-effect]).is-revealed .split-part { animation-name: split-fade; }
+.scene.is-visible .reveal[data-split][data-split-effect="pop"] .split-part, .scene [data-reveal-step][data-split][data-split-effect="pop"]:not([data-animation], [data-reveal-effect]).is-revealed .split-part { animation-name: split-pop; }
+.scene.is-visible .reveal[data-split][data-split-effect="drop"] .split-part, .scene [data-reveal-step][data-split][data-split-effect="drop"]:not([data-animation], [data-reveal-effect]).is-revealed .split-part { animation-name: split-drop; }
+.scene.is-visible .reveal[data-split][data-split-effect="type"] .split-part, .scene [data-reveal-step][data-split][data-split-effect="type"]:not([data-animation], [data-reveal-effect]).is-revealed .split-part { animation-name: split-fade; animation-duration: 1ms; }
+/* blur: each part comes into focus · flip: it flips down into place · scatter: the parts fly in from all sides, each from its own
+   direction and turn (from its number --i, so the same every time) */
+@keyframes split-blur { from { opacity: 0; filter: blur(12px); } to { opacity: 1; filter: none; } }
+@keyframes split-flip { from { opacity: 0; transform: perspective(500px) rotateX(-95deg); } to { opacity: 1; transform: none; } }
+@keyframes split-scatter { from { opacity: 0; transform: translate(calc(sin(var(--i, 0) * 2.3) * 2.6em), calc(cos(var(--i, 0) * 1.7) * 1.9em)) rotate(calc(sin(var(--i, 0) * 3.1) * 70deg)) scale(.5); } to { opacity: 1; transform: none; } }
+.scene.is-visible .reveal[data-split][data-split-effect="blur"] .split-part, .scene [data-reveal-step][data-split][data-split-effect="blur"]:not([data-animation], [data-reveal-effect]).is-revealed .split-part { animation-name: split-blur; }
+.scene.is-visible .reveal[data-split][data-split-effect="flip"] .split-part, .scene [data-reveal-step][data-split][data-split-effect="flip"]:not([data-animation], [data-reveal-effect]).is-revealed .split-part { animation-name: split-flip; }
+.scene.is-visible .reveal[data-split][data-split-effect="scatter"] .split-part, .scene [data-reveal-step][data-split][data-split-effect="scatter"]:not([data-animation], [data-reveal-effect]).is-revealed .split-part { animation-name: split-scatter; }
+.scene [data-split][data-split-effect="flip"] .split-part { transform-origin: 50% 0; }
+/* typewriter: typed, and a cursor right after the newest part (a shadow only outside the part's box: nothing moves);
+   of parts that come in together (a line), only the last has it (.split-caret-part, section 7) */
+@keyframes split-caret { from, to { box-shadow: .07em 0 0 0 currentColor; } }
+.scene.is-visible .reveal[data-split][data-split-effect="typewriter"] .split-part, .scene [data-reveal-step][data-split][data-split-effect="typewriter"]:not([data-animation], [data-reveal-effect]).is-revealed .split-part { animation-name: split-fade; animation-duration: 1ms; }
+.scene.is-visible .reveal[data-split][data-split-effect="typewriter"] .split-part.split-caret-part, .scene [data-reveal-step][data-split][data-split-effect="typewriter"]:not([data-animation], [data-reveal-effect]).is-revealed .split-part.split-caret-part {
+  animation-name: split-fade, split-caret; animation-duration: 1ms, var(--split-stagger, 60ms); animation-timing-function: linear; animation-fill-mode: both, none; }
+@keyframes pop-in { from { opacity: 0; transform: scale(.6); } to { opacity: var(--element-opacity, 1); transform: none; } }
+@keyframes drop-in { from { transform: translateY(-60%) rotate(-6deg); opacity: 0; } to { transform: none; opacity: var(--element-opacity, 1); } }
+@keyframes fade-in { to { opacity: var(--element-opacity, 1); } }
+@keyframes draw-stroke { to { stroke-dashoffset: 0; } }   /* lines with stroke-dasharray: 1 and pathLength="1" */
+@keyframes grow-x { to { transform: scaleX(1); } }         /* bars that start at scaleX(0) */
+

@@ -1,0 +1,10 @@
+# text files: LF everywhere (the build and the scripts read both, but one style keeps diffs clean)
+* text=auto eol=lf
+
+# files that are not text
+*.woff2 binary
+*.png binary
+*.jpg binary
+*.webm binary
+*.mp4 binary
+*.skill binary

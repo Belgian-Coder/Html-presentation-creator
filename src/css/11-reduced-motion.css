@@ -1,0 +1,11 @@
+/* ===========================================================================
+   11. REDUCED MOTION
+   When Windows asks for less animation, everything jumps to its end state.
+   The class "force-motion" on <html> (M key or ?motion=1) turns animations back on.
+   =========================================================================== */
+@media (prefers-reduced-motion: reduce) {
+  html:not(.force-motion) .screenshot img.is-selected { scale: 1; }
+  html:not(.force-motion) *, html:not(.force-motion) *::before, html:not(.force-motion) *::after { animation-duration: .01ms !important; animation-delay: 0s !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; }
+  html:not(.force-motion) .scene[data-background-drift] { animation: none !important; background-size: auto !important; background-position: 0 0 !important; }   /* the gradient as chosen, still */
+}
+

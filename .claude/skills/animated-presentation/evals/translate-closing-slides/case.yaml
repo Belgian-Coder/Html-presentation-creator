@@ -1,0 +1,6 @@
+schema_version: "1.1"
+name: translate-closing-slides
+expected_outcome: |
+  The feedback and thanks slides are in Dutch (texts and data-title), all other slides are byte-identical to before, and the file validates.
+context:
+  scaffold_script: place-files.sh

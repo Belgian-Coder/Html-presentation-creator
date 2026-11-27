@@ -1,0 +1,6 @@
+schema_version: "1.1"
+name: new-short-deck
+expected_outcome: |
+  A valid 4-slide deck (title, agenda with 3 click steps, 3 counting numbers, thank you), about 4 minutes, same theme, renders without errors.
+context:
+  scaffold_script: place-files.sh

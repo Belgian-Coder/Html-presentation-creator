@@ -1,0 +1,6 @@
+schema_version: "1.1"
+name: team-slide-with-clicks
+expected_outcome: |
+  deck.html has a new slide titled Our team directly after the numbers slide, with three cards for Marc, Sara and Tom revealed one per click, 40 s planned, the speaker note, and the file validates and renders without errors.
+context:
+  scaffold_script: place-files.sh

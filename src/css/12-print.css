@@ -1,0 +1,29 @@
+/* ===========================================================================
+   12. PRINT: SLIDES AND HANDOUT (settings panel → Print or save as PDF)
+   The script builds .print-pages (a still copy of every slide, in its end
+   state, plus the speaker notes for the handout), then opens the print
+   dialog. Choose "Save as PDF" there for a PDF. The page size and margins
+   are set by the script (landscape for slides, portrait for the handout).
+   =========================================================================== */
+.print-pages { display: none; }
+.print-page { break-after: page; break-inside: avoid; font-family: var(--font-body); color: #111; }
+.print-page:last-child { break-after: auto; }
+.print-heading { margin: 0 0 3mm; font-family: var(--font-mono); font-size: 10pt; color: #555; }
+.print-heading b { color: #111; margin-right: 6px; }
+.print-slide { position: relative; overflow: hidden; width: var(--print-width); height: calc(var(--print-width) * 9 / 16); background: var(--color-background); color: var(--color-text); border-radius: 2mm; }
+/* zoom (not transform) so the page layout itself is page-sized and the browser never shrinks the whole print */
+.print-stage { position: absolute; left: 0; top: 0; width: 1600px; height: 900px; zoom: var(--print-scale); }
+.print-notes { margin-top: 5mm; font-size: 11.5pt; line-height: 1.45; }
+.print-notes p, .print-notes ul { margin: 0 0 2.5mm; }
+.print-notes .notes-empty { color: #777; font-style: italic; }
+/* only while the print buttons print (class "is-printing" on <html>); Ctrl+P prints the page as it is */
+@media print {
+  html.is-printing, html.is-printing body { height: auto !important; overflow: visible !important; background: #fff !important; }
+  html.is-printing body > :not(.print-pages) { display: none !important; }
+  html.is-printing .print-pages { display: block; }
+  .print-pages, .print-pages * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+}
+/* older browsers without CSS zoom (Firefox before 126): scale with a transform instead */
+@supports not (zoom: 1) {
+  .print-stage { zoom: normal; transform: scale(var(--print-scale)); transform-origin: 0 0; }
+}

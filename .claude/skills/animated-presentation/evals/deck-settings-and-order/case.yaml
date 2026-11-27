@@ -1,0 +1,6 @@
+schema_version: "1.1"
+name: deck-settings-and-order
+expected_outcome: |
+  Footer with number and text on #deck, four-cards slide has data-skip, takeaways slide is directly before principles, active theme accent is #e86a92, file validates and renders.
+context:
+  scaffold_script: place-files.sh

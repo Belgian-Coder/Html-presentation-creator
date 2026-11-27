@@ -1,0 +1,47 @@
+/* ===========================================================================
+   3. BASE AND STAGE
+   The deck fills the window. The stage is a fixed 1600 x 900 canvas, scaled
+   with --stage-scale (set by the script) so it always fits.
+   =========================================================================== */
+html, body { height: 100%; }
+body { background: var(--color-background); color: var(--color-text); font-family: var(--font-body); font-size: 16px; line-height: 1.45; overflow: clip; margin: 0; }
+.deck { position: relative; height: 100%; overflow: clip; user-select: none; -webkit-user-select: none; }
+.deck img { -webkit-user-drag: none; user-drag: none; }
+
+/* faint grid behind everything */
+.deck::before {
+  content: ""; position: absolute; inset: 0; pointer-events: none;
+  background-image: linear-gradient(var(--color-line) 1px, transparent 1px), linear-gradient(90deg, var(--color-line) 1px, transparent 1px);
+  background-size: 64px 64px; opacity: .22;
+  mask-image: radial-gradient(ellipse at 50% 40%, #000 20%, transparent 75%);
+}
+
+/* soft coloured glow behind the stage; amber by default, teal or rose on some slides */
+.glow { position: absolute; inset: 0; pointer-events: none; opacity: 0; transition: opacity 1s ease; will-change: opacity; }
+.glow-amber { background: radial-gradient(circle at 50% 45%, color-mix(in srgb, var(--color-accent) 13%, transparent) 0, transparent 60%); opacity: 1; }
+.glow-teal { background: radial-gradient(circle at 50% 45%, color-mix(in srgb, var(--color-teal) 14%, transparent) 0, transparent 60%); }
+.glow-rose { background: radial-gradient(circle at 50% 45%, color-mix(in srgb, var(--color-rose) 14%, transparent) 0, transparent 60%); }
+.deck[data-slide="quality"] .glow-teal, .deck[data-slide="flow"] .glow-teal, .deck[data-slide="takeaways"] .glow-rose { opacity: 1; }
+.deck[data-slide="quality"] .glow-amber, .deck[data-slide="flow"] .glow-amber, .deck[data-slide="takeaways"] .glow-amber { opacity: 0; }
+
+.stage { position: absolute; left: 50%; top: 50%; width: 1600px; height: 900px; transform: translate(-50%, -50%) scale(var(--stage-scale, 1)); transform-origin: center; }
+
+/* logo: large on the first and last slide, small in the corner on all others.
+   Its settings sit on the <div class="logo"> itself (editor: Presentation tab, Logo):
+     data-corner="top-left" | "bottom-right" | "bottom-left"   (none: top right)
+     style="--logo-scale: .5"                                  (size in the corner, none: .37)
+     data-large="off"                                          (also small on the first and last slide)
+     hidden                                                    (no logo at all)
+   data-hide-logo on a <section class="scene">: no logo on that slide. */
+/* The large logo always lands at the same place (right edge 1450 px, top 150 px: clear of the
+   left-aligned titles); from another corner it moves there (100% = the logo's own width or height). */
+.logo { --logo-large-x: -94px; --logo-large-y: 116px;
+  position: absolute; z-index: 4; top: 34px; right: 56px; line-height: 0; transform-origin: top right; transform: scale(var(--logo-scale, .37)); transition: transform .7s var(--ease-in-out), opacity .4s .26s; }   /* (it comes back once the slide without it has faded out) */
+.logo[data-corner="top-left"] { right: auto; left: 56px; transform-origin: top left; --logo-large-x: calc(1394px - 100%); }
+.logo[data-corner="bottom-right"] { top: auto; bottom: 34px; transform-origin: bottom right; --logo-large-y: calc(100% - 716px); }
+.logo[data-corner="bottom-left"] { top: auto; right: auto; bottom: 34px; left: 56px; transform-origin: bottom left; --logo-large-x: calc(1394px - 100%); --logo-large-y: calc(100% - 716px); }
+.logo img { height: 200px; width: auto; }
+.stage.no-transitions .logo { transition: none; }   /* no logo animation on the very first paint */
+:is(.stage, .print-stage, .editor-stage)[data-slide="title"] .logo:not([data-large="off"]), :is(.stage, .print-stage, .editor-stage)[data-slide="thanks"] .logo:not([data-large="off"]) { transform: translate(var(--logo-large-x), var(--logo-large-y)); }
+.stage:has(> .scene.is-active[data-hide-logo]) .logo, :is(.print-stage, .editor-stage):has(> .scene[data-hide-logo]) .logo { opacity: 0; pointer-events: none; transition-delay: 0s; }
+
