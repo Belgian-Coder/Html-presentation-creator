@@ -49,9 +49,7 @@ Some slides need extra clicks before they move on, for example the car on slide 
 
 ![Slide 7](slide-07-road.png)
 
-| Spotlight (L) | Zoom (Z) |
-|---|---|
-| ![Spotlight](audience-spotlight.png) | ![Zoom](audience-zoom.png) |
+**Change a number while presenting.** Point at a counter, timer, gauge or poll: a small **− value +** bar appears. Click − or +, or click the value and type a new one. The effect starts again from its first click. The audience window follows. The file keeps its own number.
 
 ## 3. Presenter view
 
@@ -132,7 +130,7 @@ The slides list and the panel hide at the edge. Point at their tab to open them.
 
 **Typing.** Click a text and type. **Enter** finishes. **Shift+Enter** starts a new line. Select words to get a small bar with bold, colour and link.
 
-**+ Slide** opens the layouts: an empty slide or any slide template.
+**+ Slide** opens the layouts: an empty slide or one of 70 slide templates. Tabs sort them: *Basics*, *Text*, *Numbers and charts*, *Diagrams*, *Compare*, *Pictures and mock-ups*, *Audience*, *Wow* and your own (*My layouts*). *All* shows every one. Many play an effect: rolling numbers, a gauge, a spinning wheel, a chat, a 3D cube, fireworks and more. Change their texts and numbers like any other text.
 
 ![+ Slide layouts](editor-add-slide.png)
 

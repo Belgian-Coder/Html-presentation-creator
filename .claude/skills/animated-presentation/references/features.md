@@ -56,6 +56,7 @@ Example: `<div class="card reveal" style="--order:2" data-goto="backup-costs" da
 | Number `.count-up` | `data-to="0.47" data-decimals="2"`, text = formatted end value. Optional `data-from="100"`, `data-duration="3000"` (100-20000 ms, default 1400), `data-separator=","` (`" "`, `"."`), `data-decimal=","`, `data-count-style="roll"`. In a text: `<span class="count-up" data-to="1200" data-separator=",">1,200</span>`. |
 | Progress | bar `style="--value: 70%"`; ring `style="--value: 70"` plus `stroke-dasharray="70 100"` on `circle.ring-fill`; label `.progress-value` text `70 %` |
 | Chart `.chart` | `data-chart="bar|line|pie"`, `data-unit="%"`; rows `<tr><th>label</th><td>value</td></tr>`; `<tr class="is-highlight">` = accent |
+| Effect `.fx-*` | Template only (+ Slide). Edit its texts, list items and `data-*` attributes; never the run-time parts (`data-fx-runtime`). See `file-format.md` 7.8 |
 | QR, break | `.qr-code` `data-qr="https://..."` (213 chars max) with `data-edit-attr="data-qr"`; `time.break-time` `data-minutes="10"` (1-240) with text `10:00` |
 | Agenda item | `data-goto="name"`; `data-until="name"` (chapter end; absent = one slide) |
 | Table `data-table` | `tbody tr.is-highlight`; `data-table-header` (coloured header); `data-table-style="striped|grid"` (absent = lines) |

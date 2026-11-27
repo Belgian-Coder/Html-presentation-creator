@@ -769,6 +769,7 @@ def main(argv):
         tag_end = node.open_end
         fragment = start_tag_with_text(fragment[:tag_end], changes) + fragment[tag_end:]
         fragment = re.sub(r'(<[a-zA-Z][^<>]*?)\sid="[^"]*"', r'\1', fragment)   # (ids must stay unique: a copy has none, as in the editor)
+        fragment = re.sub(r'\sdata-category="[^"]*"', '', fragment)   # (only the layouts in + Slide have a category)
         fragment = re.sub(r'\sdata-morph="[^"]*"', '', fragment) if command == 'duplicate-slide' and '--keep-morph' not in options else fragment
         at, side = insert_point(deck, options) if (options.keys() & {'--after', '--before', '--first', '--last'}) or command == 'add-slide' else (deck.slide(rest[0]).end, 'after')
         edit.replace(at, at, placed(new_unit(fragment, name, deck.nl), side, deck.nl))

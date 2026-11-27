@@ -20,8 +20,10 @@ Everything is inside that one file. Make a copy for each talk.
 
 ## Edit
 
-Type on the slides, add slides from ready-made layouts, insert pictures, video, charts and shapes, and animate
-anything on a timeline.
+Type on the slides, add slides from 70 ready-made layouts, insert pictures, video, charts and shapes, and animate
+anything on a timeline. The layouts come in tabs (text, numbers, diagrams, compare, mock-ups, audience, wow) and many
+play an effect: rolling numbers, a gauge, a chat, a spinning wheel, a 3D cube, fireworks.
+[See them all online](https://belgian-coder.github.io/Html-presentation-creator/Presentation.html?templates=1).
 
 ![The editor](docs/editor.png)
 

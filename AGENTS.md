@@ -27,14 +27,19 @@ Search for the `====` banners. From top to bottom:
 
 | Part | What |
 |---|---|
-| `<style>` | CSS: 2 tokens · 3 stage · 4 transitions · 5 components · 6 animations · 7 per slide · 8 controls bar · 9 presenter view · 10 settings · 11 reduced motion · 12 print · 13 editor |
+| `<style>` | CSS: 2 tokens · 3 stage · 4 transitions · 5 components · 5b effects (`.fx-*`) · 6 animations · 7 per slide · 8 controls bar · 9 presenter view · 10 settings · 11 reduced motion · 12 print · 13 editor |
 | `SLIDE 01 …` | one `<section class="scene">` per slide, in order |
 | `END OF THE SLIDES` | new slides go above this line |
-| `SLIDE TEMPLATES` | hidden layouts for + Slide (`?templates=1` shows them) |
+| `SLIDE TEMPLATES` | hidden layouts for + Slide (`?templates=1` shows them); `data-category` picks their tab |
 | `THEMES`, `INTERFACE TEXTS`, `ANIMATIONS`, `TEXT STYLES` | JSON blocks |
 | `CUSTOM CSS`, `CUSTOM JAVASCRIPT` | the user's own code (JS runs through `show.onEnter / onStep / onLeave`) |
 | `BINARY DATA` | fonts and the `ASSETS` block (pictures, video). Encoded: skip it |
-| `MAIN SCRIPT` | one IIFE: 1 config · 5 window sync · 6 slide behaviours · 8 navigation · 10–12 presenter view · 13 settings · 17–20 editor · 23 start-up |
+| `MAIN SCRIPT` | one IIFE: 1 config · 5 window sync · 6 slide behaviours · 7 components and effects (`effects.push`) · 8 navigation · 10–12 presenter view · 13 settings · 17–20 editor · 23 start-up |
+
+**Effects** (`.fx-*`, one block each between `EFFECTS START/END` in JS section 7 and `EFFECTS CSS START/END` in CSS 5b):
+the HTML as written is the end state; the script adds class `fx-live` and run-time parts marked `data-fx-runtime`
+(never saved). Read the comment above `const effects` before adding one. A new effect gets a template with a
+`data-category`: basics, text, numbers, diagrams, compare, media, audience or wow.
 
 ## A slide
 

@@ -7,7 +7,8 @@
 //   - a screenshot of every slide (its end state, after all its clicks: data-steps or the highest data-reveal-step)
 //     for a person or a model to look at.
 //
-//   node render_check.mjs <file.html> [outDir] [--slide NAME] [--width 1600 --height 900]
+//   node render_check.mjs <file.html> [outDir] [--slide NAME] [--templates] [--width 1600 --height 900]
+//   --templates: the slide templates (+ Slide layouts) are checked too, after the slides (?templates=1)
 //
 // Node 22+ (built-in WebSocket), Chrome or Edge installed (CHROME_PATH to choose). Nothing else, no npm packages.
 // Writes <outDir>/NN-name.png and <outDir>/report.json; prints a summary; exit code 1 when there are problems.
@@ -26,6 +27,7 @@ import { pathToFileURL } from 'node:url';
 const args = process.argv.slice(2);
 const flag = (name, fallback) => { const i = args.indexOf(name); return i >= 0 ? args.splice(i, 2)[1] : fallback; };
 const onlySlide = flag('--slide', null);
+const withTemplates = args.includes('--templates'); if (withTemplates) args.splice(args.indexOf('--templates'), 1);
 const width = Number(flag('--width', 1600)), height = Number(flag('--height', 900));
 const [file, outArg] = args;
 if (!file) { console.log('node render_check.mjs <file.html> [outDir] [--slide NAME] [--width W --height H]'); process.exit(2); }
@@ -101,7 +103,7 @@ const key = async (k, code, keyCode) => { await call('Input.dispatchKeyEvent', {
 
 const report = { file: page, size: { width, height }, slides: [], errors: [], editor: null, problems: [] };
 try {
-  await call('Page.navigate', { url: pathToFileURL(page).href });
+  await call('Page.navigate', { url: pathToFileURL(page).href + (withTemplates ? '?templates=1' : '') });
   if (!await waitFor(`document.readyState === 'complete' && !!document.querySelector('#stage > section.scene.is-active')`)) report.problems.push('the presentation did not start (no active slide after 15 s)');
   // (fresh browser storage: no remembered theme, draft or settings play a part)
   const slides = await evaluate(`[...document.querySelectorAll('#stage > section.scene')].map(s => ({ name: s.dataset.name, title: s.dataset.title || '', steps: Math.max(Number(s.dataset.steps || 0), ...[...s.querySelectorAll('[data-reveal-step]')].map(e => Number(e.dataset.revealStep) || 0)), skip: s.hasAttribute('data-skip'), backup: s.hasAttribute('data-backup') }))`) || [];
@@ -169,7 +171,7 @@ try {
     const listed = opened ? await evaluate(`document.querySelectorAll('.editor-slide-list > li').length`) : 0;
     report.editor = { opened, slidesListed: listed, errors: errors.slice(before) };
     if (!opened) report.problems.push('the editor (E) did not open (a file saved without the editor has none: then this is expected)');
-    else if (listed !== slides.length) report.problems.push(`the editor lists ${listed} slides, the file has ${slides.length}`);
+    else if (listed !== slides.filter(slide => !withTemplates || !slide.name.startsWith('template-')).length) report.problems.push(`the editor lists ${listed} slides, the file has ${slides.length}`);   // (templates are no slides in the editor)
     if (report.editor.errors.length) report.problems.push('editor: script errors: ' + report.editor.errors.join(' | '));
     if (opened) { const shot = await call('Page.captureScreenshot', { format: 'png' }); writeFileSync(join(out, '00-editor.png'), Buffer.from(shot.result.data, 'base64')); }
   }

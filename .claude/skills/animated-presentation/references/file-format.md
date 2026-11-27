@@ -94,10 +94,10 @@ Texts, numbers and images may change. Never rename them. The editor locks their 
 
 `<template id="slideTemplates">` is inside `#deck` after `#stage`, within EDITOR-ONLY marks, and never shown. Each template
 is a `section.scene` with `data-name="template-..."` and `data-title="Template: ..."`, after `<!-- TEMPLATE · ... -->`.
-Names (prefix `template-`): title, section, title-bullets, bullets, cards, stats, image, quote, compare, question (answer
-on a click), process, agenda, effects, chart, morph-a, morph-b, video, qr, break, backup. `deck.py templates F` lists them.
+70 templates; `deck.py templates F` lists them. `data-category` (basics, text, numbers, diagrams, compare, media, audience,
+wow; none or `mine` = saved by the user) picks the tab in + Slide. 50 of them use an effect (`.fx-<name>`, section 7.8).
 
-Inserted as a slide, a template gets a unique `data-name` (prefix removed; `-2`, `-3` if taken), `data-title` without
+Inserted as a slide, a template loses `data-category` and gets a unique `data-name` (prefix removed; `-2`, `-3` if taken), `data-title` without
 `Template: `, no `id`s, empty notes, `data-goto="template-..."` re-pointed to the following slides (or removed),
 `data-until="template-..."` removed.
 
@@ -163,6 +163,17 @@ Example: `<script type="text/plain" id="deckCustomJs">show.onEnter((slide, info)
 - `deckAssets`: section 8.
 - Ids that must exist: `deck`, `stage`, `chapterBar`, `slideCounter`, `settingsPanel` and the control buttons (`btnPrevious`,
   `btnNext`, `btnPen`, `btnPresenter`, `btnEditor`, `btnSettings`, `btnFullscreen`...). Do not touch the controls bar or settings panel.
+
+### 7.8 Effects (`.fx-*`)
+
+Components with their own script, e.g. `.fx-gauge`, `.fx-wheel`, `.fx-chat`. CSS in section 5b, JS in section 7 between
+`EFFECTS START` and `EFFECTS END`, each registered with `effects.push({ name, selector, build, enter, step, leave, still, adjust })`.
+
+- The markup as written is the end state (editor, thumbnails, print). At run time the element gets class `fx-live` and
+  child parts with `data-fx-runtime`; neither is ever saved (the editor strips them).
+- Change content by editing the template's texts, list items or `data-*` attributes (the slide's notes say which).
+- Clicks come from `data-reveal-step` on parts or on empty markers, like any slide. Some effects add markers at run time.
+- `adjust`: a number the presenter changes on the slide (− value +); not saved, sent to the other window as `fx-value`.
 
 ## 8. Assets
 
