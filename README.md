@@ -1,50 +1,50 @@
 # HTML presentation creator
 
-**One HTML file** that is a complete presentation: 38 animated template slides, a presenter view and a built-in
-editor. No installation, no internet, no PowerPoint. Open it, replace the placeholder texts and pictures, present.
+**One HTML file** that is a complete presentation tool: 38 animated template slides, a presenter view and an editor.
+No installation, no internet, no PowerPoint.
 
 ![The title slide](docs/slide-01-title.png)
 
-## Use it
+## Start
 
-1. Download **[Presentation.html](Presentation.html)** (on GitHub: open it, then *Download raw file*).
+1. Download **[Presentation.html](Presentation.html)** (on GitHub: *Download raw file*).
 2. Open it in **Chrome or Edge**.
-3. Press **E** to edit, and **Ctrl+S** to save your changes into the same file.
+3. Press **E** to edit. **Ctrl+S** saves into the same file.
 4. Press **F** for full screen and present with the arrow keys or a clicker.
 
-That one file is all you need: fonts, pictures and code are inside it. Make a copy for every new talk.
+Everything is inside that one file. Make a copy for each talk.
 
-## What it can do
+## Edit
 
-- **Editor (E):** type on the slides, add slides from 38 layouts, insert text, images, video, charts, shapes and
-  QR codes, set animations on a timeline, change the theme. Undo, find and replace, keyboard shortcuts.
-- **Presenter view (P):** current and next slide, notes, a timer with a time plan per slide, and the audience
-  window on the second screen.
-- **While presenting:** pen (D), highlighter (H), spotlight (L), zoom (Z), black screen (B).
-- **Ten themes**, each with its own colours and fonts: Dark, Light, High contrast, Editorial, Swiss, Boardroom,
-  Studio, Forest, Nocturne and Launch. Press **S** for settings.
-- **Print or PDF:** slides, or a handout with notes.
+Type on the slides, add slides from ready-made layouts, insert pictures, video, charts and shapes, and animate
+anything on a timeline.
+
+![The editor](docs/editor.png)
+
+## Present
+
+Press **P** for the presenter view: current and next slide, notes, timer and time plan. The audience sees only the
+slides, on the second screen.
 
 ![The presenter view](docs/presenter-view.png)
 
-## Keys
-
-| | |
+| Key | Does |
 |---|---|
-| Next / back | → / ←, Space, PageDown / PageUp, or the clicker |
-| Full screen | F |
-| Editor | E |
-| Presenter view | P |
-| Settings | S |
-| Pen, highlighter, spotlight, zoom | D, H, L, Z |
-| Black screen | B |
+| → / ← or a clicker | next / back |
+| F | full screen |
+| P | presenter view |
+| E | editor |
+| S | settings: theme, time per slide, print, export |
+| L, Z | spotlight, zoom |
+| D, H | pen, highlighter |
+| B | black screen |
 
-## More
+Ten themes, each with its own colours and fonts. Print the slides or a handout with notes, or save them as PDF.
 
-- **[The manual](docs/MANUAL.md)** explains every feature. Search it for what you need.
-- **[Changes](docs/CHANGELOG.md)** lists what each version added.
-- **AI assistants:** [`.claude/skills/animated-presentation`](.claude/skills/animated-presentation/SKILL.md) is a skill
-  that lets Claude, Codex or GitHub Copilot change a presentation file for you (translate it, add slides, fix notes).
-  Coding agents start at [AGENTS.md](AGENTS.md).
-- **Changing the template itself** (developers): the source is in [`source/`](source/). `python source/build.py`
-  builds `Presentation.html` again. See *Part 2* of the manual.
+**More:** the [guide](docs/GUIDE.md) shows every feature with pictures.
+
+## For AI assistants
+
+A skill lets Claude, Codex or GitHub Copilot change a presentation for you: translate it, add slides, fix notes.
+It is in [`.claude/skills/animated-presentation`](.claude/skills/animated-presentation/SKILL.md); Codex finds it
+through [`.agents/skills`](.agents/skills/animated-presentation/SKILL.md). Coding agents read [AGENTS.md](AGENTS.md).

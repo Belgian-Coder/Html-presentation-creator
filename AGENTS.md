@@ -1,77 +1,67 @@
 # AGENTS.md
 
-Instructions for AI coding agents (Codex, GitHub Copilot, Claude Code and others) working in this repository.
-People start with [README.md](README.md); [docs/MANUAL.md](docs/MANUAL.md) documents every feature.
+Notes for AI coding agents (Codex, GitHub Copilot, Claude Code). People start with [README.md](README.md).
 
-## What this is
+## The project
 
-An animated presentation template with a presenter view and a built-in editor, delivered as **one offline HTML
-file** (`Presentation.html`). The file needs no server, no network and no libraries; it runs in Chrome and Edge.
-`Presentation.html` in the repository root is the product and is committed. Its source is split into small files in
-`source/src/`, and `source/build.py` joins them into `Presentation.html` and embeds fonts and images.
-**Paths below are relative to `source/`** unless they start with `/`.
+`Presentation.html` is the whole product: slides, CSS, JavaScript, fonts and pictures in one offline file.
+It is also the source. There is no build step. Change it with its editor (E, then Ctrl+S) or edit the HTML directly.
 
-## Layout
+The repository holds only:
 
-| Path | What it holds |
+| Path | What |
 |---|---|
-| `src/deck.html` | the outline: the READ ME FIRST guide, then one `<!-- include: … -->` line per part, in order |
-| `src/slides/` | one file per slide (`01-title.html` … `38-thanks.html`): the template's slides, with placeholder texts |
-| `src/parts/` | slide templates (hidden, for + Slide), the controls bar, the settings panel |
-| `src/css/`, `src/js/` | the styles and the script, numbered in the order they are included; the JS is one IIFE |
-| `src/themes.json` | the built-in themes (colours, and optionally fonts, corners, title spacing) |
-| `src/interface-texts.json` | every text of the interface, by key |
-| `img/`, `fonts/` | pictures and woff2 fonts; only files used in `src/` end up in the build |
-| `build.py` | the build (its docstring lists the options) |
-| `tools/test.mjs`, `tools/test/` | browser tests: a small CDP harness and 13 suites for the editor and the presenter view |
-| `tools/deliver.py`, `tools/*-shots.mjs`, `tools/ui-audit*.mjs` | delivery, screenshots, layout and action audits |
-| `/.claude/skills/animated-presentation/` | the skill for changing a **built** presentation file (see below) |
-| `/Presentation.html` | the built presentation (commit it with every change to the source) |
-| `/docs/` | the manual (`MANUAL.md`), the changes per version (`CHANGELOG.md`), screenshots |
-| `/README.md` | the short introduction for people; keep it short |
+| `Presentation.html` | the presentation, its editor and presenter view |
+| `README.md` | the introduction for people |
+| `docs/` | the user guide (`GUIDE.md`) and its screenshots |
+| `AGENTS.md` | this file |
+| `.claude/skills/animated-presentation/` | the skill (Claude Code and GitHub Copilot load it from here) |
+| `.agents/skills/animated-presentation/` | the same skill for Codex (it points to the one above) |
 
-## Commands
+**Editing a presentation file** (texts, slides, notes, themes, translation): use the skill. Its `scripts/deck.py`
+reads, changes and validates the file; `scripts/render_check.mjs` opens it in Chrome or Edge and reports problems.
 
-Run these from `source/`:
+## Map of the file
 
+Search for the `====` banners. From top to bottom:
+
+| Part | What |
+|---|---|
+| `<style>` | CSS: 2 tokens · 3 stage · 4 transitions · 5 components · 6 animations · 7 per slide · 8 controls bar · 9 presenter view · 10 settings · 11 reduced motion · 12 print · 13 editor |
+| `SLIDE 01 …` | one `<section class="scene">` per slide, in order |
+| `END OF THE SLIDES` | new slides go above this line |
+| `SLIDE TEMPLATES` | hidden layouts for + Slide (`?templates=1` shows them) |
+| `THEMES`, `INTERFACE TEXTS`, `ANIMATIONS`, `TEXT STYLES` | JSON blocks |
+| `CUSTOM CSS`, `CUSTOM JAVASCRIPT` | the user's own code (JS runs through `show.onEnter / onStep / onLeave`) |
+| `BINARY DATA` | fonts and the `ASSETS` block (pictures, video). Encoded: skip it |
+| `MAIN SCRIPT` | one IIFE: 1 config · 5 window sync · 6 slide behaviours · 8 navigation · 10–12 presenter view · 13 settings · 17–20 editor · 23 start-up |
+
+## A slide
+
+```html
+<section class="scene" data-name="numbers" data-title="Key numbers" data-estimate="50">
 ```
-python build.py --preview          # builds ../Presentation.html, index.html and _preview.html (used by the tests)
-node tools/test.mjs                # the suites for what changed since the last run that passed
-node tools/test.mjs --all          # every suite (before a delivery)
-node tools/test.mjs editor-core    # named suites
-python tools/deliver.py --to <folder> --version NN --skip-tests   # after the tests passed
-```
 
-Node 22+ and Chrome or Edge are needed for the tests; Python 3.9+ for the build. No packages to install.
-
-**Never pass `--help` to `tools/deliver.py`**: it has no help option and runs a delivery.
+- `data-name`: the slide's id (URL `#numbers`). Keep it: six names have code in JS section 6
+  (`timeline`, `product`, `mindset`, `flow`, `docs`, `reuse`).
+- `data-title`: the chapter title. `data-estimate`: planned seconds. `data-backup`: a backup slide.
+- `class="reveal" style="--order:2"`: rises in with the slide. `data-reveal-step="1"`: appears on click 1.
+  Never both on one element.
+- Pictures: `<img data-asset="img/name.png">`, with the data in the `ASSETS` JSON block.
+- Notes: `<aside class="speaker-notes"><p>…</p></aside>`; `data-note-step="2"` lights up on click 2.
 
 ## Rules
 
-- **One file, offline.** No CDN, no network requests, no libraries. New fonts go into `fonts/` (OFL) and
-  `src/css/01-fonts.css` (`tools/get-fonts.py` writes both).
-- **Interface texts** go into `src/interface-texts.json`; the code uses `ui('key')`. Keys are unique.
-- **The manual (`/docs/MANUAL.md`) documents every feature.** Change it in the same change as the code, add a line to
-  `/docs/CHANGELOG.md`, and rebuild and commit `/Presentation.html`. Only touch `/README.md` for big changes.
-- **Comments:** every function has a one-line comment that says what it does. Plain words, full names.
-- **Patching code with scripts:** never append a `// …` or an unclosed `/* …` comment to a replacement that sits in the
-  middle of a line or expression; it has silently broken unrelated code. Put comments on their own line.
-- **Slide code by name:** six slides have behaviour in `src/js/06-slide-behaviours.js`, chosen by their `data-name`:
-  `timeline`, `product`, `mindset`, `flow`, `docs`, `reuse`. Renaming them removes their behaviour.
-- **Tests cover the editor and the presenter view only**, not the content of the slides; they use the slides as test
-  material. When you change a slide, fix any test that relied on its text, but do not add tests about slide content.
-- **One test browser run at a time.** Start browsers only through `tools/test/harness.mjs` (or the tools that use it).
-  On Windows, keep `seedPasswordCheck` in the harness: without it every new test profile makes a failed Windows logon,
-  and ten of them lock the account.
-- **Known load flakes:** `editor-app` ("Your speed") and `editor-tools` ("editor open") can fail when four suites run
-  at once. Rerun that suite on its own; it counts as passed when it passes there.
-- Prefer small, readable changes over clever ones. Keep YAML out unless a tool needs it.
-
-## The skill
-
-`/.claude/skills/animated-presentation/SKILL.md` explains how to change a built `Presentation.html` (or a copy) without
-its editor: texts, translations, slides from templates, notes, times, themes, click steps, checks. Its script
-`scripts/deck.py` (Python, no packages) reads, changes and validates the file; `scripts/render_check.mjs` opens it in
-a browser and reports layout and script problems. Use it whenever the task is about a presentation file rather than
-the source in `source/src/`. Claude Code and GitHub Copilot load it from `.claude/skills/` by themselves; Codex: read that
-`SKILL.md` before such a task.
+- **One file, offline.** No CDN, no network requests, no libraries.
+- **Valid JSON** in every JSON block (double quotes, no trailing comma).
+- **Interface texts** live in `INTERFACE TEXTS`; the code uses `ui('key')`. Keys are unique.
+- **Editor and presenter view are optional parts**, between `EDITOR-ONLY-START/END` and `PRESENTER-ONLY-START/END`
+  comments. Code outside the marks never names something inside them; it asks `hasEditor()` / `hasPresenterView()`.
+- **Timings** are in `CONFIG` (JS section 1); a slide's CSS delays are in its block in CSS section 7.
+- **Comments:** one plain line per function, saying what it does.
+- **When patching with scripts**, never append a `//` or unclosed `/*` comment to a replacement in the middle of a
+  line: it has silently broken code before.
+- **After a change:** run `python .claude/skills/animated-presentation/scripts/deck.py validate Presentation.html`
+  and `node .claude/skills/animated-presentation/scripts/render_check.mjs Presentation.html`. Fix every error.
+- **New features:** add them to `docs/GUIDE.md` in a sentence or two, with a screenshot when it helps.
+- Short, clear text everywhere. No YAML unless a tool needs it.

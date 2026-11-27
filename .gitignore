@@ -1,20 +1,5 @@
-# built by source/build.py (Presentation.html itself IS kept: it is the product)
+# copies made while working (Export, Save as new file) and backups the skill's script writes
 /Presentation-*.html
-/source/Presentation-*.html
-/source/index.html
-/source/_preview.html
-/source/_joined.html
-
-# test state of this machine
-/source/tools/test/last-pass.json
-/source/tools/test/built-from.txt
-
-# Python and Node leftovers
-__pycache__/
-*.pyc
-node_modules/
-
-# backups the skill's script writes next to a file it changes
 *.bak
 
 # editors and systems
@@ -22,3 +7,4 @@ node_modules/
 Thumbs.db
 .vscode/
 .idea/
+__pycache__/

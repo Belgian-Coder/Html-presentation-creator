@@ -1,10 +1,9 @@
 #!/usr/bin/env python3
-"""deck.py: inspect, change and validate an animated presentation file (one self-contained .html) without a browser.
+"""deck.py: read, change and check an animated presentation file (one .html) without a browser.
 
-Python 3.8+, standard library only. Every change is a precise text splice: the rest of the file stays byte for byte
-as it was (comments, spacing, the huge asset line). Before a file is written, the previous version is kept next to it
-as <file>.bak (the last step) and, the first time only, <file>.orig (as it was before any change by this script); the
-result is validated, and a change that would leave errors is not written (unless --force).
+Python 3.8+, no packages. Every change is a precise text splice: the rest of the file stays byte for byte as it was.
+Before a write, the old file is kept as <file>.bak (last step) and, once, <file>.orig (before the first change).
+The result is validated; a change that would add errors is not written (unless --force).
 
 Usage:  python deck.py <command> <file.html> [arguments] [options]      e.g.  python deck.py show-slide deck.html numbers
 Slides are named by their data-name (see `slides`), not by their title.
@@ -411,7 +410,7 @@ def validate(deck):
             if node.tag == 'aside' and 'speaker-notes' in node.classes() and node.parent is not slide:
                 warnings.append(where + ': the speaker notes must be a direct child of the <section>')
     for kind in ('EDITOR', 'PRESENTER'):
-        starts = len(re.findall(r'/\* ' + kind + r'-ONLY-START|<!-- ' + kind + r'-ONLY-START -->', deck.text))   # (the marks as build.py cuts them)
+        starts = len(re.findall(r'/\* ' + kind + r'-ONLY-START|<!-- ' + kind + r'-ONLY-START -->', deck.text))   # (the marks the exports cut)
         ends = len(re.findall(kind + r'-ONLY-END \*/|<!-- ' + kind + r'-ONLY-END -->', deck.text))
         if starts != ends:
             warnings.append('%s-ONLY marks: %d START and %d END (a pair was broken: the exports without %s cut the wrong part)' % (kind, starts, ends, kind.lower()))
