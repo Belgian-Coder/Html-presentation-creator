@@ -7,6 +7,10 @@ No installation, no internet, no PowerPoint.
 
 ## Start
 
+**Try it online:** [open the presentation](https://belgian-coder.github.io/Html-presentation-creator/Presentation.html) (Chrome or Edge).
+
+To make your own:
+
 1. Download **[Presentation.html](Presentation.html)** (on GitHub: *Download raw file*).
 2. Open it in **Chrome or Edge**.
 3. Press **E** to edit. **Ctrl+S** saves into the same file.
