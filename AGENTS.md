@@ -39,7 +39,7 @@ Search for the `====` banners. From top to bottom:
 **Effects** (`.fx-*`, one block each between `EFFECTS START/END` in JS section 7 and `EFFECTS CSS START/END` in CSS 5b):
 the HTML as written is the end state; the script adds class `fx-live` and run-time parts marked `data-fx-runtime`
 (never saved). Read the comment above `const effects` before adding one. A new effect gets a template with a
-`data-category`: basics, text, numbers, diagrams, compare, media, audience or wow.
+`data-category`: basics, text, numbers, diagrams, compare, media, audience or special.
 
 ## A slide
 

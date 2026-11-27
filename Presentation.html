@@ -3536,17 +3536,22 @@ body.is-scrubbing, body.is-scrubbing * { cursor: ew-resize !important; user-sele
 .editor-menu .insert-tile { min-width: 0; overflow-wrap: anywhere; display: grid; justify-items: center; align-content: start; gap: 4px; padding: 8px 4px; text-align: center; font-size: .74rem; line-height: 1.2; }
 .insert-icon { display: grid; place-items: center; width: 28px; height: 28px; font-size: 1.25rem; line-height: 1; color: var(--color-teal); }
 .insert-icon svg { width: 24px; height: 24px; overflow: visible; }
-/* the welcome card, the first time the editor opens (20c showWelcome) */
-.editor-welcome { position: absolute; right: 16px; bottom: 16px; z-index: 6; box-sizing: border-box; width: min(360px, calc(100% - 32px)); max-height: calc(100% - 32px); overflow: auto; padding: 14px 16px; border-radius: 12px;
-  background: var(--color-presenter-background); border: 1px solid var(--color-accent); box-shadow: 0 14px 34px rgb(0 0 0 / .45); font-size: .85rem; }
-.editor-welcome h3 { margin: 0 0 6px; font-size: 1rem; color: var(--color-accent); }
-.editor-welcome ul { margin: 0 0 10px; padding-left: 18px; display: grid; gap: 4px; }
-.editor-welcome-ok { float: right; }
-/* once something is selected it folds to its title, so it never covers handles; a click on the title opens it again */
-.editor-welcome.is-small { width: auto; padding: 6px 12px; cursor: pointer; }
-.editor-welcome.is-small h3 { margin: 0; font-size: .85rem; }
-.editor-welcome.is-small h3::before { content: "💡 "; }
-.editor-welcome.is-small :is(ul, .editor-welcome-ok) { display: none; }
+/* the guided tour, the first time the editor opens (20c editorTour): a lit hole on one part, a card beside it */
+.editor-tour { position: absolute; inset: 0; z-index: 90; }
+.editor-tour-hole { position: absolute; border-radius: 10px; box-shadow: 0 0 0 4px var(--color-accent), 0 0 0 200vmax rgb(0 0 0 / .62);
+  transition: left .35s var(--ease-out), top .35s var(--ease-out), width .35s var(--ease-out), height .35s var(--ease-out); pointer-events: none; }
+.editor-tour-hole.is-none { left: 50% !important; top: 42% !important; width: 0 !important; height: 0 !important; box-shadow: 0 0 0 200vmax rgb(0 0 0 / .62); }
+.editor-tour-card { position: absolute; box-sizing: border-box; width: min(380px, calc(100% - 32px)); padding: 18px 20px 14px; border-radius: 14px;
+  background: var(--color-presenter-background); border: 1px solid var(--color-accent); box-shadow: 0 18px 44px rgb(0 0 0 / .5);
+  transition: left .35s var(--ease-out), top .35s var(--ease-out); }
+.editor-tour-card h3 { margin: 0 0 6px; font-size: 1.15rem; color: var(--color-accent); }
+.editor-tour-card p { margin: 0 0 14px; line-height: 1.5; }
+.editor-tour-foot { display: flex; align-items: center; gap: 8px; }
+.editor-tour-count { margin-right: auto; font-size: .8rem; color: var(--color-text-muted); }
+.editor-tour-next { background: var(--color-accent); color: var(--color-background); border-color: var(--color-accent); }
+.editor-tour-skip { background: transparent; border-color: transparent; color: var(--color-text-muted); }
+.editor-tour-card button[hidden] { display: none; }
+@media (prefers-reduced-motion: reduce) { html:not(.force-motion) :is(.editor-tour-hole, .editor-tour-card) { transition: none; } }
 .editor-menu-heading { margin: 4px 10px 2px; font-size: .75rem; letter-spacing: .06em; text-transform: uppercase; color: var(--color-text-muted); }
 /* a freely placed element can be dragged by its body (section 18, armBodyDrag): a text shows the text cursor until it moves */
 .editor-stage .scene .is-free:not([data-editor-locked]):not([contenteditable="true"]) { cursor: move; touch-action: none; }   /* touch: a drag moves it, it does not scroll */
@@ -4699,7 +4704,7 @@ body.is-scrubbing, body.is-scrubbing * { cursor: ew-resize !important; user-sele
 
     <!-- TEMPLATE · morph: the same data-morph name on two slides in a row makes that element glide
          from its place on the first slide to its place on the second (try Next, then Back). -->
-    <section class="scene" data-name="template-morph-a" data-category="wow" data-title="Template: morph (before)" data-estimate="20">
+    <section class="scene" data-name="template-morph-a" data-category="special" data-title="Template: morph (before)" data-estimate="20">
       <div class="content">
         <h2 class="reveal" style="--order:0" data-morph="morph-title">Morph between slides</h2>
         <div class="morph-demo">
@@ -4708,7 +4713,7 @@ body.is-scrubbing, body.is-scrubbing * { cursor: ew-resize !important; user-sele
         </div>
       </div>
     </section>
-    <section class="scene" data-name="template-morph-b" data-category="wow" data-title="Template: morph (after)" data-estimate="20" data-transition="fade">
+    <section class="scene" data-name="template-morph-b" data-category="special" data-title="Template: morph (after)" data-estimate="20" data-transition="fade">
       <div class="content">
         <h2 data-morph="morph-title">Morph between slides</h2>
         <div class="morph-demo is-after">
@@ -5766,7 +5771,7 @@ body.is-scrubbing, body.is-scrubbing * { cursor: ew-resize !important; user-sele
     </section>
 
     <!-- TEMPLATE · particle headline: change the two lines of text; the first forms on enter, the second after one click -->
-    <section class="scene" data-name="template-particles" data-category="wow" data-title="Template: particle headline" data-estimate="40">
+    <section class="scene" data-name="template-particles" data-category="special" data-title="Template: particle headline" data-estimate="40">
       <div class="content">
         <div class="eyebrow reveal" style="--order:0">Watch closely</div>
         <h2 class="reveal" style="--order:1">Words made of <span class="highlight">particles</span></h2>
@@ -5780,7 +5785,7 @@ body.is-scrubbing, body.is-scrubbing * { cursor: ew-resize !important; user-sele
     </section>
 
     <!-- TEMPLATE · parallax scene: change the title and the subtitle (the subtitle appears on the first click) -->
-    <section class="scene" data-name="template-parallax" data-category="wow" data-title="Template: parallax scene" data-estimate="40">
+    <section class="scene" data-name="template-parallax" data-category="special" data-title="Template: parallax scene" data-estimate="40">
       <div class="content">
         <div class="eyebrow reveal" style="--order:0">Depth</div>
         <h2 class="reveal" style="--order:1">A scene with <span class="highlight">depth</span></h2>
@@ -5809,7 +5814,7 @@ body.is-scrubbing, body.is-scrubbing * { cursor: ew-resize !important; user-sele
     </section>
 
     <!-- TEMPLATE · rotating cube: change the title and the line on each of the four faces; each click turns to the next face -->
-    <section class="scene" data-name="template-cube" data-category="wow" data-title="Template: rotating cube" data-estimate="45">
+    <section class="scene" data-name="template-cube" data-category="special" data-title="Template: rotating cube" data-estimate="45">
       <div class="content">
         <div class="eyebrow reveal" style="--order:0">Four topics</div>
         <h2 class="reveal" style="--order:1">One cube, <span class="highlight">four faces</span></h2>
@@ -5832,7 +5837,7 @@ body.is-scrubbing, body.is-scrubbing * { cursor: ew-resize !important; user-sele
     </section>
 
     <!-- TEMPLATE · zoom into a detail: each numbered spot is a click item with data-zoom-in; move a spot with its left/top/width/height, edit its caption -->
-    <section class="scene" data-name="template-zoom-detail" data-category="wow" data-title="Template: Zoom into a detail" data-estimate="50">
+    <section class="scene" data-name="template-zoom-detail" data-category="special" data-title="Template: Zoom into a detail" data-estimate="50">
       <div class="content">
         <div class="eyebrow reveal" style="--order:0">Look closer</div>
         <h2 class="reveal" style="--order:1">The dashboard, <span class="highlight">up close</span></h2>
@@ -5863,7 +5868,7 @@ body.is-scrubbing, body.is-scrubbing * { cursor: ew-resize !important; user-sele
     </section>
 
     <!-- TEMPLATE · fireworks finale: change the big words; fireworks launch on enter and on each of the three clicks -->
-    <section class="scene" data-name="template-fireworks" data-category="wow" data-title="Template: fireworks finale" data-estimate="40">
+    <section class="scene" data-name="template-fireworks" data-category="special" data-title="Template: fireworks finale" data-estimate="40">
       <div class="content">
         <div class="eyebrow reveal" style="--order:0">The end</div>
         <h2 class="reveal" style="--order:1">Questions, ideas, <span class="highlight">feedback?</span></h2>
@@ -6491,7 +6496,7 @@ body.is-scrubbing, body.is-scrubbing * { cursor: ew-resize !important; user-sele
   "editor.category.compare": "Compare",
   "editor.category.media": "Pictures and mock-ups",
   "editor.category.audience": "Audience",
-  "editor.category.wow": "Wow",
+  "editor.category.special": "Special effects",
   "editor.category.mine": "My layouts",
   "fx.adjust": "Change the number",
   "editor.cancel": "Cancel",
@@ -7772,14 +7777,32 @@ body.is-scrubbing, body.is-scrubbing * { cursor: ew-resize !important; user-sele
   "editor.insertGroupData": "Data and layout",
   "editor.insertGroupShapes": "Shapes",
   "editor.insertFreeTip": "Placed freely: drag it anywhere on the slide",
-  "cmd.welcome": "Show the welcome card again",
-  "cmd.welcomeTitle": "Welcome to the editor",
-  "cmd.welcomeSelect": "Click anything on the slide to select it: its settings appear on the right.",
-  "cmd.welcomeType": "Double-click a text to type in it. Drag an element to move it, a corner to size it.",
-  "cmd.welcomeInsert": "+ Insert (top bar) adds text, pictures, charts and shapes. You can also drag a picture onto the slide.",
-  "cmd.welcomeFind": "Can't find something? Press Ctrl+K and type it in your own words: \"shadow\", \"transparent\", \"go to 5\".",
-  "cmd.welcomeUndo": "Ctrl+Z undoes anything, Ctrl+S saves, F5 plays the presentation from this slide.",
-  "cmd.welcomeOk": "Got it",
+  "cmd.welcome": "Take the tour of the editor",
+  "cmd.tourSkip": "Skip the tour",
+  "cmd.tourBack": "Back",
+  "cmd.tourNext": "Next",
+  "cmd.tourDone": "Start editing",
+  "cmd.tourCount": "{step} of {total}",
+  "cmd.tourWelcomeTitle": "Welcome to the editor",
+  "cmd.tourWelcome": "A short tour of the main parts: ten steps, under a minute. Click Next, or Skip the tour. Help › Take the tour brings it back.",
+  "cmd.tourSlidesTitle": "Your slides",
+  "cmd.tourSlides": "Click a slide to edit it. Drag it to change the order.",
+  "cmd.tourAddTitle": "Add a slide",
+  "cmd.tourAdd": "Choose from 70 ready-made layouts, sorted in tabs: text, numbers, diagrams, special effects and more.",
+  "cmd.tourCanvasTitle": "The slide",
+  "cmd.tourCanvas": "Click anything to select it. Double-click a text to type. Drag to move it, a corner to resize it.",
+  "cmd.tourInsertTitle": "Insert",
+  "cmd.tourInsert": "Add text, pictures, video, charts and shapes. You can also drag a picture straight onto the slide.",
+  "cmd.tourPanelTitle": "Settings",
+  "cmd.tourPanel": "The settings of what you selected: its look, the slide's transition and notes, and the theme of all slides.",
+  "cmd.tourAnimateTitle": "Animate",
+  "cmd.tourAnimate": "Make things appear with the slide or on a click. Press T for the timeline.",
+  "cmd.tourFindTitle": "Find anything",
+  "cmd.tourFind": "Press Ctrl+K and type what you want in your own words: \"shadow\", \"new slide\", \"go to 5\".",
+  "cmd.tourPlayTitle": "Try it",
+  "cmd.tourPlay": "Play the presentation from this slide (F5), as the audience will see it.",
+  "cmd.tourSaveTitle": "Save",
+  "cmd.tourSave": "Ctrl+S saves into this same file. Ctrl+Z undoes anything. That's it: have fun!",
   "editor.sectionMore": "More",
   "cmd.exportPdf": "Print or save as PDF…",
   "editor.exportPdfNote": "A new tab opens the print window: choose \"Save as PDF\" as the printer.",
@@ -18204,10 +18227,11 @@ body.is-scrubbing, body.is-scrubbing * { cursor: ew-resize !important; user-sele
       this.select(wanted || this.modelScenes()[0]);
       editorCode.onOpen();   // the page shows the file's own CSS as the editor has it (section 20e)
       this.renderAll();
-      runSafely('welcome', () => editorCommands.showWelcome());   // the first time in this browser: the few things to know
+      runSafely('tour', () => editorTour.start());   // the first time in this browser: a short guided tour (section 20c)
     },
     close() {
       if (!this.element) return;
+      editorTour.end(false);   // (a tour left half-way starts again next time)
       this.escapeAt = 0;
       this.closeDialog();
       if (editorCommands.spell) editorCommands.stopSpelling();
@@ -19760,7 +19784,7 @@ body.is-scrubbing, body.is-scrubbing * { cursor: ew-resize !important; user-sele
 
   /** Every small slide picture in `container` scaled to the width of its box. */
   /** The categories of the layouts in + Slide, in their order (data-category on a template; none: mine). */
-  const TEMPLATE_CATEGORIES = ['basics', 'text', 'numbers', 'diagrams', 'compare', 'media', 'audience', 'wow', 'mine'];
+  const TEMPLATE_CATEGORIES = ['basics', 'text', 'numbers', 'diagrams', 'compare', 'media', 'audience', 'special', 'mine'];
 
   function scaleThumbnails(container) {
     container.querySelectorAll('.editor-thumb').forEach(box => box.style.setProperty('--thumb-scale', box.clientWidth / CONFIG.stage.width));
@@ -27568,7 +27592,7 @@ body.is-scrubbing, body.is-scrubbing * { cursor: ew-resize !important; user-sele
     ['zoom-in', 'cmd.zoomIn', 'Ctrl +', { action: 'zoom-in' }], ['zoom-out', 'cmd.zoomOut', 'Ctrl −', { action: 'zoom-out' }], ['zoom-selection', 'cmd.zoomSelection', 'Shift+2', { action: 'zoom-selection' }], ['zoom-fit', 'cmd.zoomFit', 'Ctrl+0', { action: 'zoom-fit' }],
     ['preview-transition', 'cmd.previewTransition', '', { action: 'preview-transition' }], ['replace-logo', 'cmd.replaceLogo', '', { action: 'replace-logo' }],
     ['save', 'cmd.save', 'Ctrl+S', { action: 'save' }], ['save-as', 'cmd.saveAs', 'Ctrl+Shift+S', { action: 'save-as' }], ['export-no-presenter', 'cmd.exportNoPresenter', '', { action: 'export-no-presenter' }], ['export-slides-only', 'cmd.exportSlidesOnly', '', { action: 'export-slides-only' }], ['export-clean', 'cmd.exportClean', '', { action: 'export-clean' }], ['new', 'cmd.new', '', { action: 'new' }], ['play', 'cmd.play', '', { action: 'play' }],
-    ['welcome', 'cmd.welcome', '', () => editorCommands.showWelcome(true)],
+    ['welcome', 'cmd.welcome', '', () => editorTour.start(true)],
     ['tips-again', 'cmd.tipsAgain', '', () => editorCommands.resetTips()],
     ['insert-date', 'cmd.insertDate', '', { action: 'insert-date' }],
     ['change-layout', 'cmd.changeLayout', '', { action: 'change-layout' }],
@@ -27702,6 +27726,126 @@ body.is-scrubbing, body.is-scrubbing * { cursor: ew-resize !important; user-sele
   /** 🎨 in the text bar: the theme's colours as variables (a new theme recolours the words too); '' is the text's own colour. */
   const TEXT_COLOURS = [['', 'cmd.colourOwn'], ['var(--color-accent)', 'cmd.colourAccent'], ['var(--color-teal)', 'cmd.colourTeal'], ['var(--color-rose)', 'cmd.colourRose'],
     ['var(--color-violet)', 'cmd.colourViolet'], ['var(--color-text-muted)', 'cmd.colourMuted']];
+
+  /* ---- The guided tour (Help › Take the tour): one part of the editor at a time, lit, with a short text ----
+     It starts by itself the first time the editor opens in this browser. Next, Back and Skip; the arrow keys and Esc
+     work too. Each step: [what to light (CSS selectors, the first one that is visible), its title, its text]. */
+  const TOUR_STEPS = [
+    [null, 'cmd.tourWelcomeTitle', 'cmd.tourWelcome'],
+    ['.editor-slides, .editor-edge-tab.is-left', 'cmd.tourSlidesTitle', 'cmd.tourSlides'],
+    ['.editor [data-action="add-slide"]', 'cmd.tourAddTitle', 'cmd.tourAdd'],
+    ['.editor-stage', 'cmd.tourCanvasTitle', 'cmd.tourCanvas'],
+    ['.editor-insert-button', 'cmd.tourInsertTitle', 'cmd.tourInsert'],
+    ['.editor-panel, .editor-edge-tab.is-right', 'cmd.tourPanelTitle', 'cmd.tourPanel'],
+    ['.editor-tabs [data-tab="animations"], .editor-edge-tab.is-right', 'cmd.tourAnimateTitle', 'cmd.tourAnimate'],
+    ['.editor-find-button', 'cmd.tourFindTitle', 'cmd.tourFind'],
+    ['.editor [data-action="play"]', 'cmd.tourPlayTitle', 'cmd.tourPlay'],
+    ['.editor [data-action="save"]', 'cmd.tourSaveTitle', 'cmd.tourSave'],
+  ];
+  const TOUR_KEY = 'presentation-editor.toured';
+
+  const editorTour = {
+    layer: null,   // the tour on screen (.editor-tour), or null
+    index: 0,
+
+    /** Starts the tour: always when asked for (Help), else only the first time in this browser. */
+    start(force) {
+      if (!editor.element) return;
+      let seen = true;
+      try { seen = !!localStorage.getItem(TOUR_KEY); } catch (e) { /* no storage: never by itself */ }
+      if (seen && !force) return;
+      this.end(false);
+      const layer = this.layer = document.createElement('div');
+      layer.className = 'editor-tour';
+      layer.innerHTML = '<div class="editor-tour-hole"></div><section class="editor-tour-card" role="dialog" aria-modal="true" aria-labelledby="editorTourTitle">' +
+        '<h3 id="editorTourTitle"></h3><p></p><div class="editor-tour-foot"><span class="editor-tour-count"></span>' +
+        '<button type="button" class="editor-tour-skip"></button><button type="button" class="editor-tour-back"></button>' +
+        '<button type="button" class="editor-tour-next"></button></div></section>';
+      layer.querySelector('.editor-tour-skip').textContent = ui('cmd.tourSkip');
+      layer.querySelector('.editor-tour-back').textContent = ui('cmd.tourBack');
+      layer.querySelector('.editor-tour-skip').addEventListener('click', () => this.end(true));
+      layer.querySelector('.editor-tour-back').addEventListener('click', () => this.show(this.index - 1));
+      layer.querySelector('.editor-tour-next').addEventListener('click', () => this.show(this.index + 1));
+      layer.addEventListener('pointerdown', event => { if (!event.target.closest('.editor-tour-card')) event.preventDefault(); });   // (the editor behind takes no clicks)
+      layer.addEventListener('keydown', event => this.onKey(event));
+      this.onResize = () => this.place();
+      window.addEventListener('resize', this.onResize);
+      editor.element.appendChild(layer);
+      this.show(0);
+    },
+    /** Shows step `index`; past the last one the tour ends. */
+    show(index) {
+      if (!this.layer) return;
+      if (index >= TOUR_STEPS.length) { this.end(true); return; }
+      this.index = Math.max(0, index);
+      const [, title, body] = TOUR_STEPS[this.index];
+      const card = this.layer.querySelector('.editor-tour-card');
+      card.querySelector('h3').textContent = ui(title);
+      card.querySelector('p').textContent = ui(body);
+      card.querySelector('.editor-tour-count').textContent = ui('cmd.tourCount', { step: this.index + 1, total: TOUR_STEPS.length });
+      card.querySelector('.editor-tour-back').hidden = this.index === 0;
+      card.querySelector('.editor-tour-skip').hidden = this.index === TOUR_STEPS.length - 1;   // (the last step ends it anyway)
+      card.querySelector('.editor-tour-next').textContent = ui(this.index === TOUR_STEPS.length - 1 ? 'cmd.tourDone' : 'cmd.tourNext');
+      this.place();
+      card.querySelector('.editor-tour-next').focus({ preventScroll: true });
+    },
+    /** The first part of the step's selectors that is on screen, or null (then the card stands in the middle). */
+    target() {
+      const selectors = TOUR_STEPS[this.index][0];
+      if (!selectors) return null;
+      for (const selector of selectors.split(',')) {
+        const element = editor.element.querySelector(selector.trim());
+        const box = element && element.getBoundingClientRect();
+        if (box && box.width > 4 && box.height > 4) return element;
+      }
+      return null;
+    },
+    /** Puts the lit hole on the step's part and the card beside it, inside the window. */
+    place() {
+      if (!this.layer) return;
+      const hole = this.layer.querySelector('.editor-tour-hole');
+      const card = this.layer.querySelector('.editor-tour-card');
+      const area = this.layer.getBoundingClientRect();
+      const target = this.target();
+      const gap = 14;
+      if (!target) {
+        hole.classList.add('is-none');
+        card.style.left = Math.max(16, (area.width - card.offsetWidth) / 2) + 'px';
+        card.style.top = Math.max(16, (area.height - card.offsetHeight) / 2) + 'px';
+        return;
+      }
+      hole.classList.remove('is-none');
+      const box = target.getBoundingClientRect();
+      const left = clamp(box.left - area.left - 6, 0, area.width), top = clamp(box.top - area.top - 6, 0, area.height);
+      const right = clamp(box.right - area.left + 6, 0, area.width), bottom = clamp(box.bottom - area.top + 6, 0, area.height);
+      Object.assign(hole.style, { left: left + 'px', top: top + 'px', width: (right - left) + 'px', height: (bottom - top) + 'px' });
+      const width = card.offsetWidth, height = card.offsetHeight;
+      // beside the part where there is room: right, left, below, above; else over its middle
+      let x, y;
+      if (area.width - right >= width + gap * 2) { x = right + gap; y = top; }
+      else if (left >= width + gap * 2) { x = left - gap - width; y = top; }
+      else if (area.height - bottom >= height + gap * 2) { x = left; y = bottom + gap; }
+      else if (top >= height + gap * 2) { x = left; y = top - gap - height; }
+      else { x = (left + right - width) / 2; y = (top + bottom - height) / 2; }
+      card.style.left = clamp(x, 16, Math.max(16, area.width - width - 16)) + 'px';
+      card.style.top = clamp(y, 16, Math.max(16, area.height - height - 16)) + 'px';
+    },
+    /** Arrow keys and Enter move on, Esc skips; no key reaches the editor meanwhile. */
+    onKey(event) {
+      event.stopPropagation();
+      if (event.key === 'Escape') { event.preventDefault(); this.end(true); }
+      else if (event.key === 'ArrowRight') { event.preventDefault(); this.show(this.index + 1); }
+      else if (event.key === 'ArrowLeft') { event.preventDefault(); this.show(this.index - 1); }
+    },
+    /** Ends the tour; `remember`: it does not start by itself again in this browser. */
+    end(remember) {
+      if (remember) { try { localStorage.setItem(TOUR_KEY, '1'); } catch (e) { /* it may start again next time */ } }
+      if (this.onResize) window.removeEventListener('resize', this.onResize);
+      this.onResize = null;
+      if (this.layer) this.layer.remove();
+      this.layer = null;
+    },
+  };
 
   const editorCommands = {
     palette: null,     // the open "find an action" window: { box, input, list, rows, index }
@@ -28505,9 +28649,6 @@ body.is-scrubbing, body.is-scrubbing * { cursor: ew-resize !important; user-sele
     placeBar() {
       if (!editor.element) return;
       runSafely('tips', () => this.tipFor(editorCanvas.selected));
-      // the welcome card folds to its title once something is selected (it would cover the selection's handles)
-      const welcome = editor.element.querySelector('.editor-welcome');
-      if (welcome && editorCanvas.selected) welcome.classList.add('is-small');
       this.updateStatus();
       let bar = editor.element.querySelector('.editor-quickbar');
       const element = editorCanvas.selected;
@@ -28723,31 +28864,6 @@ body.is-scrubbing, body.is-scrubbing * { cursor: ew-resize !important; user-sele
       flag.hidden = !over;
       flag.textContent = over ? ui('cmd.overflow') : '';
       flag.title = over ? ui('cmd.overflowTooltip') : '';
-    },
-    /** The first time the editor opens in this browser: a small card in a corner of the slide area with the few things
-        to know, so nobody needs a manual. "Got it" hides it for good; Help › Show the welcome tips brings it back. */
-    showWelcome(force) {
-      const canvas = editor.element && editor.element.querySelector('.editor-canvas');
-      if (!canvas) return;
-      let seen = true;
-      try { seen = !!localStorage.getItem('presentation-editor.welcomed'); } catch (e) { /* no storage: never shown */ }
-      if (seen && !force) return;
-      const old = canvas.querySelector('.editor-welcome');
-      if (old) old.remove();
-      const card = document.createElement('section');
-      card.className = 'editor-welcome';
-      card.setAttribute('role', 'dialog');
-      card.setAttribute('aria-label', ui('cmd.welcomeTitle'));
-      card.innerHTML = '<h3>' + escapeHtml(ui('cmd.welcomeTitle')) + '</h3><ul>' +
-        ['cmd.welcomeSelect', 'cmd.welcomeType', 'cmd.welcomeInsert', 'cmd.welcomeFind', 'cmd.welcomeUndo'].map(key => '<li>' + escapeHtml(ui(key)) + '</li>').join('') +
-        '</ul><button type="button" class="editor-welcome-ok">' + escapeHtml(ui('cmd.welcomeOk')) + '</button>';
-      card.addEventListener('click', event => { if (card.classList.contains('is-small')) { event.stopPropagation(); card.classList.remove('is-small'); } });   // (folded: a click opens it)
-      if (!force && window.innerHeight < 820) card.classList.add('is-small');   // (a small screen: as its title only, a click opens it, so the slide stays free)
-      card.querySelector('.editor-welcome-ok').addEventListener('click', () => {
-        try { localStorage.setItem('presentation-editor.welcomed', '1'); } catch (e) { /* shown again next time */ }
-        card.remove();
-      });
-      canvas.appendChild(card);
     },
     /** The tip for this kind of element, the first time one is selected in this browser (TIPS). */
     tipFor(element) {

@@ -104,6 +104,10 @@ Backup slides for questions come after the last slide. Next never goes there. Op
 
 Press **E** (or click the pencil button) to change the presentation in the file itself.
 
+The first time, a short **guided tour** shows the main parts, one at a time. Click **Next**, or **Skip the tour**. *Help › Take the tour of the editor* shows it again.
+
+![The guided tour](editor-tour.png)
+
 ![The editor](editor.png)
 
 **The three areas**
@@ -130,7 +134,7 @@ The slides list and the panel hide at the edge. Point at their tab to open them.
 
 **Typing.** Click a text and type. **Enter** finishes. **Shift+Enter** starts a new line. Select words to get a small bar with bold, colour and link.
 
-**+ Slide** opens the layouts: an empty slide or one of 70 slide templates. Tabs sort them: *Basics*, *Text*, *Numbers and charts*, *Diagrams*, *Compare*, *Pictures and mock-ups*, *Audience*, *Wow* and your own (*My layouts*). *All* shows every one. Many play an effect: rolling numbers, a gauge, a spinning wheel, a chat, a 3D cube, fireworks and more. Change their texts and numbers like any other text.
+**+ Slide** opens the layouts: an empty slide or one of 70 slide templates. Tabs sort them: *Basics*, *Text*, *Numbers and charts*, *Diagrams*, *Compare*, *Pictures and mock-ups*, *Audience*, *Special effects* and your own (*My layouts*). *All* shows every one. Many play an effect: rolling numbers, a gauge, a spinning wheel, a chat, a 3D cube, fireworks and more. Change their texts and numbers like any other text.
 
 ![+ Slide layouts](editor-add-slide.png)
 

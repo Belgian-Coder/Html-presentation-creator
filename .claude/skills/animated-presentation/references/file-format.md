@@ -95,7 +95,7 @@ Texts, numbers and images may change. Never rename them. The editor locks their 
 `<template id="slideTemplates">` is inside `#deck` after `#stage`, within EDITOR-ONLY marks, and never shown. Each template
 is a `section.scene` with `data-name="template-..."` and `data-title="Template: ..."`, after `<!-- TEMPLATE · ... -->`.
 70 templates; `deck.py templates F` lists them. `data-category` (basics, text, numbers, diagrams, compare, media, audience,
-wow; none or `mine` = saved by the user) picks the tab in + Slide. 50 of them use an effect (`.fx-<name>`, section 7.8).
+special; none or `mine` = saved by the user) picks the tab in + Slide. 50 of them use an effect (`.fx-<name>`, section 7.8).
 
 Inserted as a slide, a template loses `data-category` and gets a unique `data-name` (prefix removed; `-2`, `-3` if taken), `data-title` without
 `Template: `, no `id`s, empty notes, `data-goto="template-..."` re-pointed to the following slides (or removed),
